@@ -7,7 +7,9 @@ import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Pizza;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.Arrays;
 import java.util.HashMap;
 
 public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidation {
@@ -39,21 +41,21 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return sum == totalInPence;
     }
 
-    private HashMap<String, String> getPizzaToRestaurantMap(Restaurant[] restaurants) {
-        HashMap<String, String> pizzaToRestaurant = new HashMap<>();
+    private HashMap<String, Restaurant> getPizzaToRestaurantMap(Restaurant[] restaurants) {
+        HashMap<String, Restaurant> pizzaToRestaurant = new HashMap<>();
         for (Restaurant restaurant : restaurants) {
             Pizza[] pizzas = restaurant.menu();
             for (Pizza pizza : pizzas) {
-                pizzaToRestaurant.put(pizza.name(), restaurant.name());
+                pizzaToRestaurant.put(pizza.name(), restaurant);
             }
         }
         return pizzaToRestaurant;
     }
 
-    private boolean allPizzasDefined(Pizza[] pizzas, HashMap<String, String> pizzaToRestaurantMap) {
+    private boolean allPizzasDefined(Pizza[] pizzas, HashMap<String, Restaurant> pizzaToRestaurantMap) {
         boolean allPizzasDefined = true;
         for (Pizza pizza : pizzas) {
-            String restaurant = pizzaToRestaurantMap.get(pizza.name());
+            String restaurant = pizzaToRestaurantMap.get(pizza.name()).name();
             allPizzasDefined = allPizzasDefined & (restaurant != null);
         }
         return allPizzasDefined;
@@ -63,10 +65,10 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return pizzas.length > 4;
     }
 
-    private boolean isMultipleRestaurants(Pizza[] pizzas, HashMap<String, String> pizzaToRestaurantMap) {
+    private boolean isMultipleRestaurants(Pizza[] pizzas, HashMap<String, Restaurant> pizzaToRestaurantMap) {
         String lastRestaurant = null;
         for (Pizza pizza : pizzas) {
-            String restaurant = pizzaToRestaurantMap.get(pizza.name());
+            String restaurant = pizzaToRestaurantMap.get(pizza.name()).name();
             if (lastRestaurant == null || restaurant.equals(lastRestaurant)) {
                 lastRestaurant = restaurant;
             }
@@ -77,10 +79,20 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return false;
     }
 
+    private boolean isRestaurantClosed(Restaurant restaurant) {
+        LocalDate today = LocalDate.now();
+        for (DayOfWeek dayOfWeek : restaurant.openingDays()) {
+            if (today.getDayOfWeek() == dayOfWeek) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public Order validateOrder(Order orderToValidate, Restaurant[] definedRestaurants) {
         CreditCardInformation cardInfo = orderToValidate.getCreditCardInformation();
-        HashMap<String, String> pizzaToRestaurantMap = getPizzaToRestaurantMap(definedRestaurants);
+        HashMap<String, Restaurant> pizzaToRestaurantMap = getPizzaToRestaurantMap(definedRestaurants);
 
         // Test card number
         if (!isValidCardNumber(cardInfo.getCreditCardNumber())) {
@@ -128,6 +140,16 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         // Test if pizza was ordered from multiple restaurants
         if (isMultipleRestaurants(orderToValidate.getPizzasInOrder(), pizzaToRestaurantMap)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
+            return orderToValidate;
+        }
+
+        // If here, then pizzas are all defined and from the same restaurant
+        Restaurant targetRestaurant = pizzaToRestaurantMap.get(orderToValidate.getPizzasInOrder()[0].name());
+
+        // Check if target restaurant closed
+        if (isRestaurantClosed(targetRestaurant)) {
+            orderToValidate.setOrderValidationCode(OrderValidationCode.RESTAURANT_CLOSED);
             orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
