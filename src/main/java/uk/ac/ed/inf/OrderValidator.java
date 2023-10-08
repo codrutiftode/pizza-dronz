@@ -7,6 +7,14 @@ import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Pizza;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 
+import java.time.LocalDate;
+import java.time.Month;
+import java.time.Year;
+import java.time.temporal.TemporalField;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+
 public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidation {
 
     private boolean isValidCardNumber(String cardNumber) {
@@ -18,7 +26,16 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
     }
 
     private boolean isValidCardExpiry(String expiry) {
-        return true; // TODO
+        // Parse expiry date
+        String[] expiryItems = expiry.split("/");
+        int expMonth = Integer.parseInt(expiryItems[0]);
+        int expYear = Integer.parseInt(expiryItems[1]);
+
+        // Get current month and year
+        LocalDate curDate = LocalDate.now();
+        int curYear = curDate.getYear() % 100;
+        int curMonth = curDate.getMonthValue();
+        return expYear > curYear || (expYear == curYear && expMonth >= curMonth);
     }
 
     private boolean isTotalPriceCorrect(Pizza[] pizzas, int totalInPence) {
