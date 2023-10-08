@@ -25,8 +25,8 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
     private boolean isValidCardExpiry(String expiry) {
         // Parse expiry date
         String[] expiryItems = expiry.split("/");
-        int expMonth = Integer.parseInt(expiryItems[0]);
-        int expYear = Integer.parseInt(expiryItems[1]);
+        int expMonth = Integer.parseInt(expiryItems[0].trim());
+        int expYear = Integer.parseInt(expiryItems[1].trim());
 
         // Get current month and year
         LocalDate curDate = LocalDate.now();
@@ -55,7 +55,7 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
     private boolean allPizzasDefined(Pizza[] pizzas, HashMap<String, Restaurant> pizzaToRestaurantMap) {
         boolean allPizzasDefined = true;
         for (Pizza pizza : pizzas) {
-            String restaurant = pizzaToRestaurantMap.get(pizza.name()).name();
+            Restaurant restaurant = pizzaToRestaurantMap.get(pizza.name());
             allPizzasDefined = allPizzasDefined & (restaurant != null);
         }
         return allPizzasDefined;
