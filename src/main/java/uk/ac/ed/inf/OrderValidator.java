@@ -8,12 +8,7 @@ import uk.ac.ed.inf.ilp.data.Pizza;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 
 import java.time.LocalDate;
-import java.time.Month;
-import java.time.Year;
-import java.time.temporal.TemporalField;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
+import java.util.HashMap;
 
 public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidation {
 
@@ -44,21 +39,48 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return sum == totalInPence;
     }
 
-    private boolean allPizzasDefined(Pizza[] pizzas, Restaurant[] restaurants) {
-        return true; // TODO
+    private HashMap<String, String> getPizzaToRestaurantMap(Restaurant[] restaurants) {
+        HashMap<String, String> pizzaToRestaurant = new HashMap<>();
+        for (Restaurant restaurant : restaurants) {
+            Pizza[] pizzas = restaurant.menu();
+            for (Pizza pizza : pizzas) {
+                pizzaToRestaurant.put(pizza.name(), restaurant.name());
+            }
+        }
+        return pizzaToRestaurant;
+    }
+
+    private boolean allPizzasDefined(Pizza[] pizzas, HashMap<String, String> pizzaToRestaurantMap) {
+        boolean allPizzasDefined = true;
+        for (Pizza pizza : pizzas) {
+            String restaurant = pizzaToRestaurantMap.get(pizza.name());
+            allPizzasDefined = allPizzasDefined & (restaurant != null);
+        }
+        return allPizzasDefined;
     }
 
     private boolean tooManyPizzas(Pizza[] pizzas) {
         return pizzas.length > 4;
     }
 
-    private boolean isMultipleRestaurants(Pizza[] pizzas, Restaurant[] restaurants) {
-        return true; // TODO
+    private boolean isMultipleRestaurants(Pizza[] pizzas, HashMap<String, String> pizzaToRestaurantMap) {
+        String lastRestaurant = null;
+        for (Pizza pizza : pizzas) {
+            String restaurant = pizzaToRestaurantMap.get(pizza.name());
+            if (lastRestaurant == null || restaurant.equals(lastRestaurant)) {
+                lastRestaurant = restaurant;
+            }
+            else {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public Order validateOrder(Order orderToValidate, Restaurant[] definedRestaurants) {
         CreditCardInformation cardInfo = orderToValidate.getCreditCardInformation();
+        HashMap<String, String> pizzaToRestaurantMap = getPizzaToRestaurantMap(definedRestaurants);
 
         // Test card number
         if (!isValidCardNumber(cardInfo.getCreditCardNumber())) {
@@ -90,7 +112,7 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         }
 
         // Test all pizzas are defined and belong to one restaurant
-        if (!allPizzasDefined(orderToValidate.getPizzasInOrder(), definedRestaurants)) {
+        if (!allPizzasDefined(orderToValidate.getPizzasInOrder(), pizzaToRestaurantMap)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_NOT_DEFINED);
             orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
@@ -104,7 +126,7 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         }
 
         // Test if pizza was ordered from multiple restaurants
-        if (isMultipleRestaurants(orderToValidate.getPizzasInOrder(), definedRestaurants)) {
+        if (isMultipleRestaurants(orderToValidate.getPizzasInOrder(), pizzaToRestaurantMap)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS);
             orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
