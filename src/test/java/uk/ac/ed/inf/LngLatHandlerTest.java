@@ -4,16 +4,16 @@ import junit.framework.TestCase;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 
-public class LngLatHandlingTest extends TestCase {
+public class LngLatHandlerTest extends TestCase {
     public void testDistanceTo()
     {
-        LngLatHandling handler = new LngLatHandling();
+        LngLatHandler handler = new LngLatHandler();
         double distance = handler.distanceTo(new LngLat(3, 2), new LngLat(4, 5));
         assertEquals(distance, Math.sqrt(10));
     }
 
     public void testIsCloseTo() {
-        LngLatHandling handler = new LngLatHandling();
+        LngLatHandler handler = new LngLatHandler();
         boolean isClose = handler.isCloseTo(new LngLat(10, 10), new LngLat(10.00012, 10));
         boolean isClose2 = handler.isCloseTo(new LngLat(10, 10), new LngLat(10.00016, 10));
         assertTrue(isClose);
@@ -21,7 +21,7 @@ public class LngLatHandlingTest extends TestCase {
     }
 
     public void testIsInRegionSimple() {
-        LngLatHandling handler = new LngLatHandling();
+        LngLatHandler handler = new LngLatHandler();
         LngLat[] vertices = new LngLat[]{
                 new LngLat(0, 0),
                 new LngLat(0, 6),
@@ -34,7 +34,7 @@ public class LngLatHandlingTest extends TestCase {
     }
 
     public void testIsInRegionOnBorder() {
-        LngLatHandling handler = new LngLatHandling();
+        LngLatHandler handler = new LngLatHandler();
         LngLat[] vertices = new LngLat[]{
                 new LngLat(0, 0),
                 new LngLat(6, 0),
@@ -47,7 +47,7 @@ public class LngLatHandlingTest extends TestCase {
     }
 
     public void testIsInRegionOutside() {
-        LngLatHandling handler = new LngLatHandling();
+        LngLatHandler handler = new LngLatHandler();
         LngLat[] vertices = new LngLat[]{
                 new LngLat(0, 0),
                 new LngLat(6, 0),
@@ -60,7 +60,7 @@ public class LngLatHandlingTest extends TestCase {
     }
 
     public void testIsInRegionComplexPolygon1() {
-        LngLatHandling handler = new LngLatHandling();
+        LngLatHandler handler = new LngLatHandler();
         LngLat[] vertices = new LngLat[]{
                 new LngLat(0, 0),
                 new LngLat(6, 0),
@@ -77,7 +77,7 @@ public class LngLatHandlingTest extends TestCase {
     }
 
     public void testIsInRegionComplexPolygon2() {
-        LngLatHandling handler = new LngLatHandling();
+        LngLatHandler handler = new LngLatHandler();
         LngLat[] vertices = new LngLat[]{
                 new LngLat(0, 0),
                 new LngLat(2, 3),

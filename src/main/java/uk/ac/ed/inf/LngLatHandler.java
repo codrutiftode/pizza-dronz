@@ -6,7 +6,7 @@ import uk.ac.ed.inf.ilp.data.NamedRegion;
 
 import java.util.Arrays;
 
-public class LngLatHandling implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling {
+public class LngLatHandler implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling {
 
     private final static double LNGLAT_DOUBLE_PRECISION = 100;
 
