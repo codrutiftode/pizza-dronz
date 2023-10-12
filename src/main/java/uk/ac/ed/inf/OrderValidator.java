@@ -79,10 +79,9 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return false;
     }
 
-    private boolean isRestaurantClosed(Restaurant restaurant) {
-        LocalDate today = LocalDate.now();
+    private boolean isRestaurantClosed(LocalDate orderDate, Restaurant restaurant) {
         for (DayOfWeek dayOfWeek : restaurant.openingDays()) {
-            if (today.getDayOfWeek() == dayOfWeek) {
+            if (orderDate.getDayOfWeek() == dayOfWeek) {
                 return false;
             }
         }
@@ -148,7 +147,7 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         Restaurant targetRestaurant = pizzaToRestaurantMap.get(orderToValidate.getPizzasInOrder()[0].name());
 
         // Check if target restaurant closed
-        if (isRestaurantClosed(targetRestaurant)) {
+        if (isRestaurantClosed(orderToValidate.getOrderDate(), targetRestaurant)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.RESTAURANT_CLOSED);
             orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;

@@ -128,6 +128,7 @@ public class OrderValidatorTest extends TestCase {
                 new Pizza("Quatro Formaggi", 300),
                 new Pizza("Pineapple", 150),
         });
+        order.setOrderDate(LocalDate.now());
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
         assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.RESTAURANT_CLOSED);
