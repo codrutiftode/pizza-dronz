@@ -9,7 +9,6 @@ import uk.ac.ed.inf.ilp.data.Restaurant;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.Arrays;
 import java.util.HashMap;
 
 public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidation {
@@ -22,6 +21,11 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return cvv.length() == 3;
     }
 
+    /**
+     * Tests if the card is not already expired
+     * @param expiry the expiry date string
+     * @return true if the expiry date is in the future or today, false otherwise
+     */
     private boolean isValidCardExpiry(String expiry) {
         // Parse expiry date
         String[] expiryItems = expiry.split("/");
@@ -35,12 +39,24 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return expYear > curYear || (expYear == curYear && expMonth >= curMonth);
     }
 
+    /**
+     * Tests if the total price equals the sum of individual prices
+     * @param pizzas each providing an individual price
+     * @param totalInPence total to compare against
+     * @return true if the two numbers match, false otherwise
+     */
     private boolean isTotalPriceCorrect(Pizza[] pizzas, int totalInPence) {
         int sum = 0;
         for (Pizza pizza : pizzas) sum += pizza.priceInPence();
         return sum == totalInPence;
     }
 
+    /**
+     * Map each pizza name to a restaurant.
+     * Note: assumes pizza names are unique, i.e. belong to only one restaurant
+     * @param restaurants the restaurants to include in the map
+     * @return a map containing a restaurant for every pizza name on the menus
+     */
     private HashMap<String, Restaurant> getPizzaToRestaurantMap(Restaurant[] restaurants) {
         HashMap<String, Restaurant> pizzaToRestaurant = new HashMap<>();
         for (Restaurant restaurant : restaurants) {
@@ -52,6 +68,12 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return pizzaToRestaurant;
     }
 
+    /**
+     * Checks if all pizzas belong to at least one existing restaurant
+     * @param pizzas pizzas to check
+     * @param pizzaToRestaurantMap map to get restaurant for a given pizza
+     * @return true if all pizzas exist at a restaurant, false otherwise
+     */
     private boolean allPizzasDefined(Pizza[] pizzas, HashMap<String, Restaurant> pizzaToRestaurantMap) {
         boolean allPizzasDefined = true;
         for (Pizza pizza : pizzas) {
@@ -61,10 +83,21 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return allPizzasDefined;
     }
 
+    /**
+     * Checks if an order contains too many pizzas
+     * @param pizzas pizzas in order
+     * @return true if too many, false otherwise
+     */
     private boolean tooManyPizzas(Pizza[] pizzas) {
         return pizzas.length > 4;
     }
 
+    /**
+     * Checks if an order contains pizzas from multiple different restaurants
+     * @param pizzas pizzas in the order
+     * @param pizzaToRestaurantMap map to get restaurant for a given pizza
+     * @return true if pizzas correspond to different restaurants, false otherwise
+     */
     private boolean isMultipleRestaurants(Pizza[] pizzas, HashMap<String, Restaurant> pizzaToRestaurantMap) {
         String lastRestaurant = null;
         for (Pizza pizza : pizzas) {
@@ -79,6 +112,12 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         return false;
     }
 
+    /**
+     * Checks if the restaurant is closed on a given order date
+     * @param orderDate the order date
+     * @param restaurant the restaurant
+     * @return true if the restaurant is closed on that date, false otherwise
+     */
     private boolean isRestaurantClosed(LocalDate orderDate, Restaurant restaurant) {
         for (DayOfWeek dayOfWeek : restaurant.openingDays()) {
             if (orderDate.getDayOfWeek() == dayOfWeek) {
