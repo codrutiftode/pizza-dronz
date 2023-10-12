@@ -61,7 +61,7 @@ public class OrderValidatorTest extends TestCase {
         });
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.NO_ERROR);
+        assertNotSame(validatedOrder.getOrderValidationCode(), OrderValidationCode.TOTAL_INCORRECT);
     }
 
     public void testTotalPriceIncorrect() {

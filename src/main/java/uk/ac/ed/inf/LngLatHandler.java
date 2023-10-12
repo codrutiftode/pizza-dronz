@@ -55,8 +55,8 @@ public class LngLatHandler implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling
             return point1.lng() >= currentPos.lng() && isInBetween(point1.lat(), currentPos.lat(), point2.lat());
         }
         try {
-            double xCoord = projectOnSegment(currentPos.lat(), point1, point2);
-            return currentPos.lng() < xCoord && isInBetween(point1.lng(), xCoord, point2.lng());
+            double projectedLng = projectOnSegment(currentPos.lat(), point1, point2);
+            return currentPos.lng() < projectedLng && isInBetween(point1.lng(), projectedLng, point2.lng());
         }
         catch (Exception e) {
             return false;
@@ -73,6 +73,16 @@ public class LngLatHandler implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling
     }
 
     /**
+     * Tests if two doubles are equal when rounded to a fixed precision
+     * @param a first double
+     * @param b second double
+     * @return true if equal, false otherwise
+     */
+    private boolean doublesEqual(double a, double b) {
+        return roundDouble(a) == roundDouble(b);
+    }
+
+    /**
      * Checks if a given position lands on a given segment
      * @param currentPos the position to check
      * @param point1 one end of the segment
@@ -80,15 +90,18 @@ public class LngLatHandler implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling
      * @return true if the position is geometrically on the segment, false otherwise
      */
     private boolean isOnSegment(LngLat currentPos, LngLat point1, LngLat point2) {
-        if (roundDouble(point1.lat()) == roundDouble(point2.lat())) { // If segment is horizontal
-            return roundDouble(currentPos.lat()) == roundDouble(point1.lat()) && isInBetween(point1.lng(), currentPos.lng(), point2.lng());
+        if (doublesEqual(point1.lat(), point2.lat())) { // If segment is horizontal
+            return doublesEqual(currentPos.lat(), point1.lat())
+                    && isInBetween(point1.lng(), currentPos.lng(), point2.lng());
         }
-        else if (roundDouble(point1.lng()) == roundDouble(point2.lng())) { // If segment is vertical
-            return roundDouble(currentPos.lng()) == roundDouble(point1.lng()) && isInBetween(point1.lat(), currentPos.lat(), point2.lat());
+        else if (doublesEqual(point1.lng(), point2.lng())) { // If segment is vertical
+            return doublesEqual(currentPos.lng(), point1.lng())
+                    && isInBetween(point1.lat(), currentPos.lat(), point2.lat());
         }
         else { // If segment is neither horizontal nor vertical
             double projectedLng = projectOnSegment(currentPos.lat(), point1, point2);
-            return roundDouble(currentPos.lng()) == roundDouble(projectedLng) && isInBetween(point1.lng(), projectedLng, point2.lng());
+            return doublesEqual(currentPos.lng(), projectedLng)
+                    && isInBetween(point1.lng(), projectedLng, point2.lng());
         }
     }
 
@@ -115,9 +128,16 @@ public class LngLatHandler implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling
         return Arrays.stream(vertices).map((LngLat vertex) -> rotateVertex(vertex, angle)).toArray(LngLat[]::new);
     }
 
+    /**
+     * Tests if a position is within a region's polygon, using ray casting.
+     * This draws a straight line to the right and counts the times it intersects the polygon
+     * If it is odd, the position is within the region, otherwise it is outside.
+     * @param position the point to consider
+     * @param region the polygon that the point should be in
+     * @return true if the point is inside the polygon, and false otherwise
+     */
     @Override
     public boolean isInRegion(LngLat position, NamedRegion region) {
-        // Use Ray Casting algorithm
         // If y coordinate matches one or more vertices, rotate the plane by small degree
         LngLat[] vertices = region.vertices();
         LngLat currentPosition = position;
