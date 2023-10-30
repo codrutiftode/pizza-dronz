@@ -132,6 +132,20 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         CreditCardInformation cardInfo = orderToValidate.getCreditCardInformation();
         HashMap<String, Restaurant> pizzaToRestaurantMap = getPizzaToRestaurantMap(definedRestaurants);
 
+        // Mark order as invalid if any of the fields are null
+        if (orderToValidate.getPizzasInOrder() == null ||
+                orderToValidate.getOrderDate() == null ||
+                orderToValidate.getOrderNo() == null ||
+                orderToValidate.getOrderValidationCode() == null ||
+                orderToValidate.getOrderStatus() == null ||
+                orderToValidate.getCreditCardInformation() == null) {
+            // There is no error code for this, so leave it as undefined
+            orderToValidate.setOrderValidationCode(OrderValidationCode.UNDEFINED);
+            orderToValidate.setOrderStatus(OrderStatus.INVALID);
+            return orderToValidate;
+        }
+
+
         // Test card number
         if (!isValidCardNumber(cardInfo.getCreditCardNumber())) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.CARD_NUMBER_INVALID);
