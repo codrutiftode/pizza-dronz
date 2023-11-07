@@ -9,7 +9,6 @@ import uk.ac.ed.inf.ilp.data.Restaurant;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.util.HashMap;
 
 public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidation {
 
@@ -52,32 +51,15 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
     }
 
     /**
-     * Map each pizza name to a restaurant.
-     * Note: assumes pizza names are unique, i.e. belong to only one restaurant
-     * @param restaurants the restaurants to include in the map
-     * @return a map containing a restaurant for every pizza name on the menus
-     */
-    private HashMap<String, Restaurant> getPizzaToRestaurantMap(Restaurant[] restaurants) {
-        HashMap<String, Restaurant> pizzaToRestaurant = new HashMap<>();
-        for (Restaurant restaurant : restaurants) {
-            Pizza[] pizzas = restaurant.menu();
-            for (Pizza pizza : pizzas) {
-                pizzaToRestaurant.put(pizza.name(), restaurant);
-            }
-        }
-        return pizzaToRestaurant;
-    }
-
-    /**
      * Checks if all pizzas belong to at least one existing restaurant
      * @param pizzas pizzas to check
-     * @param pizzaToRestaurantMap map to get restaurant for a given pizza
+     * @param restaurantFinder to get restaurant for a given pizza
      * @return true if all pizzas exist at a restaurant, false otherwise
      */
-    private boolean allPizzasDefined(Pizza[] pizzas, HashMap<String, Restaurant> pizzaToRestaurantMap) {
+    private boolean allPizzasDefined(Pizza[] pizzas, RestaurantFinder restaurantFinder) {
         boolean allPizzasDefined = true;
         for (Pizza pizza : pizzas) {
-            Restaurant restaurant = pizzaToRestaurantMap.get(pizza.name());
+            Restaurant restaurant = restaurantFinder.getRestaurantForPizza(pizza);
             allPizzasDefined = allPizzasDefined & (restaurant != null);
         }
         return allPizzasDefined;
@@ -95,13 +77,13 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
     /**
      * Checks if an order contains pizzas from multiple different restaurants
      * @param pizzas pizzas in the order
-     * @param pizzaToRestaurantMap map to get restaurant for a given pizza
+     * @param restaurantFinder to get restaurant for a given pizza
      * @return true if pizzas correspond to different restaurants, false otherwise
      */
-    private boolean isMultipleRestaurants(Pizza[] pizzas, HashMap<String, Restaurant> pizzaToRestaurantMap) {
+    private boolean isMultipleRestaurants(Pizza[] pizzas, RestaurantFinder restaurantFinder) {
         String lastRestaurant = null;
         for (Pizza pizza : pizzas) {
-            String restaurant = pizzaToRestaurantMap.get(pizza.name()).name();
+            String restaurant = restaurantFinder.getRestaurantForPizza(pizza).name();
             if (lastRestaurant == null || restaurant.equals(lastRestaurant)) {
                 lastRestaurant = restaurant;
             }
@@ -130,7 +112,7 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
     @Override
     public Order validateOrder(Order orderToValidate, Restaurant[] definedRestaurants) {
         CreditCardInformation cardInfo = orderToValidate.getCreditCardInformation();
-        HashMap<String, Restaurant> pizzaToRestaurantMap = getPizzaToRestaurantMap(definedRestaurants);
+        RestaurantFinder restaurantFinder = new RestaurantFinder(definedRestaurants);
 
         // Mark order as invalid if any of the fields are null
         if (orderToValidate.getPizzasInOrder() == null ||
@@ -176,7 +158,7 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         }
 
         // Test all pizzas are defined and belong to one restaurant
-        if (!allPizzasDefined(orderToValidate.getPizzasInOrder(), pizzaToRestaurantMap)) {
+        if (!allPizzasDefined(orderToValidate.getPizzasInOrder(), restaurantFinder)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_NOT_DEFINED);
             orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
@@ -190,14 +172,14 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         }
 
         // Test if pizza was ordered from multiple restaurants
-        if (isMultipleRestaurants(orderToValidate.getPizzasInOrder(), pizzaToRestaurantMap)) {
+        if (isMultipleRestaurants(orderToValidate.getPizzasInOrder(), restaurantFinder)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS);
             orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
         }
 
         // If here, then pizzas are all defined and from the same restaurant
-        Restaurant targetRestaurant = pizzaToRestaurantMap.get(orderToValidate.getPizzasInOrder()[0].name());
+        Restaurant targetRestaurant = restaurantFinder.getRestaurantForOrder(orderToValidate);
 
         // Check if target restaurant closed
         if (isRestaurantClosed(orderToValidate.getOrderDate(), targetRestaurant)) {
