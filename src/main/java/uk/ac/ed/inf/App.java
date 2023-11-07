@@ -1,11 +1,13 @@
 package uk.ac.ed.inf;
 
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
+import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Hello world!
@@ -49,6 +51,17 @@ public class App
         List<Order> validOrders = Arrays.stream(orders)
                 .map(order -> orderValidator.validateOrder(order, restaurants))
                 .filter(order -> order.getOrderValidationCode() == OrderValidationCode.NO_ERROR)
+                .toList();
+
+        // Find paths
+        PathFinder pathFinder = new PathFinder();
+        RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
+        List<LngLat[]> paths = validOrders.stream()
+                .map(order -> pathFinder.computePath(order,
+                                                    restaurantFinder.getRestaurantForOrder(order),
+                                                    noFlyZones,
+                                                    centralArea))
+                .filter(Objects::nonNull)
                 .toList();
     }
 }
