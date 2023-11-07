@@ -42,7 +42,7 @@ public class APIClient {
         }
     }
 
-    protected String createEndpoint(String endpoint) {
-        return this.baseApiUrl + "/" + endpoint;
+    protected String createEndpoint(String... endpointParts) {
+        return this.baseApiUrl + "/" + String.join("/", endpointParts);
     }
 }
