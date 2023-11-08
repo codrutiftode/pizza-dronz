@@ -54,13 +54,10 @@ public class App
                 .toList();
 
         // Find paths
-        PathFinder pathFinder = new PathFinder();
+        PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         List<LngLat[]> paths = validOrders.stream()
-                .map(order -> pathFinder.computePath(order,
-                                                    restaurantFinder.getRestaurantForOrder(order),
-                                                    noFlyZones,
-                                                    centralArea))
+                .map(order -> pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location()))
                 .filter(Objects::nonNull)
                 .toList();
     }
