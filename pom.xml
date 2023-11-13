@@ -23,5 +23,17 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>de.grundid.opendatalab</groupId>
+      <artifactId>geojson-jackson</artifactId>
+      <version>1.14</version>
+    </dependency>
+    <dependency>
+      <groupId>com.sample</groupId>
+      <artifactId>sample</artifactId>
+      <version>1.0</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/libraries/IlpDataObjects.jar</systemPath>
+    </dependency>
   </dependencies>
 </project>

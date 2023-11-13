@@ -3,9 +3,15 @@ package uk.ac.ed.inf;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonSyntaxException;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
+import uk.ac.ed.inf.ilp.gsonUtils.LocalDateDeserializer;
+
+import java.time.LocalDate;
 
 public class OrdersAPIClient extends APIClient {
     private final static String ALIVE_ENDPOINT = "isAlive";
@@ -60,11 +66,12 @@ public class OrdersAPIClient extends APIClient {
     }
 
     private <T> T parseData(String data, Class<T> resultingType) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.registerModule(new JavaTimeModule());
+        GsonBuilder builder = new GsonBuilder();
+        builder.registerTypeAdapter(LocalDate.class, new LocalDateDeserializer());
+        Gson gson = builder.create();
         try {
-            return objectMapper.readValue(data, resultingType);
-        } catch (JsonProcessingException e) {
+            return gson.fromJson(data, resultingType);
+        } catch (JsonSyntaxException e) {
             CustomLogger.getLogger().error("Error while parsing API response of type: " + resultingType.toGenericString() + "\n" + e.getMessage());
             return null;
         }

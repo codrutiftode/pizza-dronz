@@ -60,5 +60,10 @@ public class App
                 .map(order -> pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location()))
                 .filter(Objects::nonNull)
                 .toList();
+
+        JsonFileWriter deliveriesWriter = new JsonFileWriter("resultfiles/deliveries.json");
+        JsonFileWriter flightpathWriter = new JsonFileWriter("resultfiles/flightpath.json");
+        GeoJsonFileWriter droneWriter = new GeoJsonFileWriter("resultfiles/drone.json");
+        // TODO: finish this
     }
 }
