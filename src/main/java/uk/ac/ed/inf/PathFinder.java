@@ -21,10 +21,16 @@ public class PathFinder {
     }
     public LngLat[] computePath(LngLat targetLocation) {
         LngLat[] pathToRestaurant = findPathBetween(dropOffPoint, targetLocation, null);
-        LngLat[] pathToCentralArea = findPathToCentralArea(targetLocation);
-        LngLat entrancePoint = pathToCentralArea[pathToCentralArea.length - 1];
-        LngLat[] pathFromRestaurant = findPathBetween(entrancePoint, dropOffPoint, null);
-        return concatPaths(pathToRestaurant, pathToCentralArea, pathFromRestaurant);
+        if (!navigator.isInCentralArea(targetLocation, centralArea)) {
+            LngLat[] pathToCentralArea = findPathToCentralArea(targetLocation);
+            LngLat entrancePoint = pathToCentralArea[pathToCentralArea.length - 1];
+            LngLat[] pathFromRestaurant = findPathBetween(entrancePoint, dropOffPoint, null);
+            return concatPaths(pathToRestaurant, pathToCentralArea, pathFromRestaurant);
+        }
+        else {
+            LngLat[] pathFromRestaurant = findPathBetween(targetLocation, dropOffPoint, null);
+            return concatPaths(pathToRestaurant, pathFromRestaurant);
+        }
     }
 
     private LngLat[] concatPaths(LngLat[]... paths) {

@@ -24,7 +24,7 @@ public class OrdersProvider {
                 LocalDate.now().getDayOfWeek().plus(1)
         };
         this.restaurants = new Restaurant[]{
-                new Restaurant("Dominos", new LngLat(-3.1838572025299072, 55.94449876875712), daysOpen1, new Pizza[]{
+                new Restaurant("Civs", new LngLat(-3.1890,55.9470), daysOpen1, new Pizza[]{
                         new Pizza("A", 100),
                         new Pizza("B", 200)
                 }),

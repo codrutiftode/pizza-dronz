@@ -27,7 +27,7 @@ public class GeojsonTest extends TestCase {
 //                .filter(order -> order.getOrderValidationCode() == OrderValidationCode.NO_ERROR)
 //                .toList();
 
-        Order firstOrder = orders[1];
+        Order firstOrder = orders[0];
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
 
