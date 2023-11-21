@@ -21,8 +21,10 @@ public class PathFinder {
     }
     public LngLat[] computePath(LngLat targetLocation) {
         LngLat[] pathToRestaurant = findPathBetween(dropOffPoint, targetLocation, null);
-        CustomLogger.getLogger().log("Path to restaurant found.");
-        return pathToRestaurant;
+        LngLat[] pathToCentralArea = findPathToCentralArea(targetLocation);
+        LngLat entrancePoint = pathToCentralArea[pathToCentralArea.length - 1];
+        LngLat[] pathFromRestaurant = findPathBetween(entrancePoint, dropOffPoint, null);
+        return concatPaths(pathToRestaurant, pathToCentralArea, pathFromRestaurant);
     }
 
     private LngLat[] concatPaths(LngLat[]... paths) {
@@ -39,7 +41,51 @@ public class PathFinder {
     }
 
     private LngLat[] findPathToCentralArea(LngLat startPoint) {
-        return new LngLat[]{startPoint, startPoint};
+        LngLat[] caVertices = centralArea.vertices();
+        ArrayList<LngLat> projections = new ArrayList<>();
+        for (int i = 0; i < caVertices.length; i++) {
+            LngLat vertex1 = caVertices[i];
+            LngLat vertex2 = caVertices[(i + 1) % caVertices.length];
+            LngLat projection = navigator.projectOnLine(startPoint, vertex1, vertex2);
+            CustomLogger.getLogger().log("Projection " + projection.toString());
+            if (navigator.isPointOnSegment(projection, vertex1, vertex2)) {
+                projections.add(projection);
+            }
+        }
+
+        LngLat closestProjection = null;
+        double minDistance = 10000; // TODO: make this nicer
+        for (LngLat projection : projections) {
+            double distance = navigator.distanceTo(startPoint, projection);
+            if (distance < minDistance) {
+                minDistance = distance;
+                closestProjection = projection;
+            }
+        }
+        if (closestProjection != null) {
+            return naiveAStar(startPoint, closestProjection);
+        }
+
+
+        double minDistance2 = 10000; // TODO: make this nicer
+        LngLat minDistanceVertex = null;
+        for (LngLat caVertex : caVertices) {
+            double distanceToVertex = navigator.distanceTo(startPoint, caVertex);
+            if (distanceToVertex < minDistance2) {
+                minDistance2 = distanceToVertex;
+                minDistanceVertex = caVertex;
+            }
+        }
+
+        return naiveAStar(startPoint, minDistanceVertex);
+
+        // Go through every edge in central area
+        // IF the segments from start to edge form two acute angles
+        //      Create straight line projection onto segment
+        //      A* to projection
+        // ELSE
+        //      Find the nearest corner of central area
+        //      A* to it
     }
 
     private LngLat[] findPathBetween(LngLat startPoint, LngLat endPoint, NamedRegion maxRegion) {
@@ -48,14 +94,13 @@ public class PathFinder {
 
     private LngLat[] naiveAStar(LngLat startPoint, LngLat endPoint) {
         ArrayList<FrontierNode> frontier = new ArrayList<>();
-        FrontierNode currentNode = new FrontierNode(0, startPoint, null);
+        FrontierNode currentNode = new FrontierNode(0, startPoint, null, -1);
         int counter = 0;
         while (!navigator.isCloseTo(currentNode.currentPosition, endPoint)) {
             List<FrontierNode> nextMoves = filterNoFly(currentNode.getNextMoves());
             frontier.addAll(nextMoves);
             int lowestCostIndex = pickLowestCost(frontier, endPoint);
-            currentNode = frontier.get(lowestCostIndex);
-            frontier.remove(lowestCostIndex);
+            currentNode = frontier.remove(lowestCostIndex);
 
             counter += 1;
             if (counter > 3000) {
@@ -74,11 +119,33 @@ public class PathFinder {
         for (int i = 0; i < path.length; i++) {
             path[i] = pathList.get(i);
         }
+
         return path;
     }
 
     private List<FrontierNode> filterNoFly(List<FrontierNode> possibleMoves) {
-        return possibleMoves.stream().filter(move -> !isNoFlyPosition(move.getCurrentPosition())).toList();
+        return possibleMoves.stream().filter(move -> !crossesIntoNoFly(move)).toList();
+    }
+
+    private boolean ccw(LngLat a, LngLat b, LngLat c) {
+        return (c.lat() - a.lat()) * (b.lng() - a.lng()) > (b.lat() - a.lat()) * (c.lng() - a.lng());
+    }
+
+    private boolean segmentsIntersect(LngLat a, LngLat b, LngLat c, LngLat d) {
+        return (ccw(a, c, d) != ccw(b, c, d)) && (ccw(a,b,c) != ccw(a,b,d));
+    }
+
+    private boolean crossesIntoNoFly(FrontierNode move) {
+        LngLat oldPosition = move.getPreviousNode().getCurrentPosition();
+        LngLat newPosition = move.getCurrentPosition();
+        for (NamedRegion region : noFlyZones) {
+            for (int i = 0; i + 1< region.vertices().length; i++) {
+                int j = i + 1;
+                boolean intersect = segmentsIntersect(oldPosition, newPosition, region.vertices()[i], region.vertices()[j]);
+                if (intersect) return true;
+            }
+        }
+        return false;
     }
 
     private boolean isNoFlyPosition(LngLat position) {
@@ -95,7 +162,9 @@ public class PathFinder {
         int lowestNodeIndex = 0;
         for (int i = 0; i < frontier.size(); i++) {
             FrontierNode node = frontier.get(i);
-            double cost = heuristicCost(node.currentPosition, endPoint) + node.getCostSoFar();
+            double h = heuristicCost(node.currentPosition, endPoint);
+            double g = node.getCostSoFar();
+            double cost = h * 1.2 + g;
             if (cost < minCost) {
                 minCost = cost;
                 lowestNodeIndex = i;
@@ -112,11 +181,13 @@ public class PathFinder {
         private double costSoFar;
         private LngLat currentPosition;
         private FrontierNode previousNode;
+        private int previousMove;
 
-        public FrontierNode(double costSoFar, LngLat currentPosition, FrontierNode previousNode) {
+        public FrontierNode(double costSoFar, LngLat currentPosition, FrontierNode previousNode, int previousMove) {
             this.costSoFar = costSoFar;
             this.currentPosition = currentPosition;
             this.previousNode = previousNode;
+            this.previousMove = previousMove;
         }
 
         public double getCostSoFar() {
@@ -132,11 +203,12 @@ public class PathFinder {
         }
 
         public List<FrontierNode> getNextMoves() {
-            List<FrontierNode> nextMoves = new ArrayList<>(16);
+            List<FrontierNode> nextMoves = new ArrayList<>();
             final double costOfOneMove = SystemConstants.DRONE_MOVE_DISTANCE;
             for (int i = 0; i < 16; i++) {
+                if (i == previousMove) continue;
                 LngLat nextPosition = navigator.nextPosition(currentPosition, Math.toRadians(i * 22.5));
-                FrontierNode newNode = new FrontierNode(costSoFar + costOfOneMove, nextPosition, this);
+                FrontierNode newNode = new FrontierNode(costSoFar + costOfOneMove, nextPosition, this, i);
                 nextMoves.add(newNode);
             }
             return nextMoves;

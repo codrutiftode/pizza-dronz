@@ -29,6 +29,10 @@ public class LngLatHandler implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling
         return (a < b && b < c) || (c < b && b < a);
     }
 
+    private boolean isInBetweenEquals(double a, double b, double c) {
+        return (a <= b && b <= c) || (c <= b && b <= a);
+    }
+
     /**
      * Projects a vertex on a given segment
      * Note: assume the segment is neither vertical nor horizontal
@@ -103,6 +107,37 @@ public class LngLatHandler implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling
             return doublesEqual(currentPos.lng(), projectedLng)
                     && isInBetween(point1.lng(), projectedLng, point2.lng());
         }
+    }
+
+    private double x(LngLat p) {
+        return p.lng();
+    }
+
+    private double y(LngLat p) {
+        return p.lat();
+    }
+
+    public LngLat projectOnLine(LngLat C, LngLat A, LngLat B) {
+        double x_D, y_D;
+        double t1 = x(B) - x(A);
+        double t2 = y(B) - y(A);
+        if (t1 == 0) { // Vertical line
+            x_D = x(A);
+            y_D = y(C);
+        }
+        else {
+            double m_AB = t2 / t1;
+            y_D = (y(A) + m_AB * x(C) + m_AB * m_AB * y(C) - m_AB * x(A)) / (1 + m_AB * m_AB);
+            x_D = (x(C) * t1 - y_D * t2 + y(C) * t2) / t1;
+        }
+        return new LngLat(x_D, y_D);
+    }
+
+    public boolean isPointOnSegment(LngLat D, LngLat A, LngLat B) {
+        boolean condition1 = isInBetweenEquals(x(A), x(D), x(B));
+        boolean condition2 = isInBetweenEquals(y(A), y(D), y(B));
+        boolean condition3 = doublesEqual((x(B) - x(A)) * (y(D) - y(A)), (x(D) - x(A)) * (y(B) - y(A)));
+        return condition1 && condition2 && condition3;
     }
 
     /**
