@@ -2,6 +2,7 @@ package uk.ac.ed.inf;
 
 import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
+import uk.ac.ed.inf.ilp.constant.SystemConstants;
 import uk.ac.ed.inf.ilp.data.CreditCardInformation;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Pizza;
@@ -44,10 +45,10 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
      * @param totalInPence total to compare against
      * @return true if the two numbers match, false otherwise
      */
-    private boolean isTotalPriceCorrect(Pizza[] pizzas, int totalInPence) {
+    private boolean isTotalPriceCorrect(Order order) {
         int sum = 0;
-        for (Pizza pizza : pizzas) sum += pizza.priceInPence();
-        return sum == totalInPence;
+        for (Pizza pizza : order.getPizzasInOrder()) sum += pizza.priceInPence();
+        return sum + SystemConstants.ORDER_CHARGE_IN_PENCE == order.getPriceTotalInPence();
     }
 
     /**
@@ -150,8 +151,7 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
         }
 
         // Test total price
-        if (!isTotalPriceCorrect(orderToValidate.getPizzasInOrder(),
-                orderToValidate.getPriceTotalInPence())) {
+        if (!isTotalPriceCorrect(orderToValidate)) {
             orderToValidate.setOrderValidationCode(OrderValidationCode.TOTAL_INCORRECT);
             orderToValidate.setOrderStatus(OrderStatus.INVALID);
             return orderToValidate;
