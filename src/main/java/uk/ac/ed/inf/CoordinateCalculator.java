@@ -3,7 +3,7 @@ package uk.ac.ed.inf;
 import uk.ac.ed.inf.ilp.data.LngLat;
 
 public class CoordinateCalculator {
-    private final static double LNGLAT_DOUBLE_PRECISION = 100;
+    private final static double LNGLAT_DOUBLE_PRECISION = 100000;
 
     protected double x(LngLat p) {
         return p.lng();

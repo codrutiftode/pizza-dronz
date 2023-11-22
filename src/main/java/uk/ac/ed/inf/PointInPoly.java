@@ -17,70 +17,89 @@ public class PointInPoly extends CoordinateCalculator {
      * Projects a vertex on a given segment
      * Note: assume the segment is neither vertical nor horizontal
      * @param lat the latitude of the target vertex
-     * @param point1 one end of the segment
-     * @param point2 the other end of the segment
+     * @param A one end of the segment
+     * @param B the other end of the segment
      * @return the longitude of the projected point on the segment
      */
-    private double projectOnSegment(double lat, LngLat point1, LngLat point2) {
-        double slopeOfSegment = (point2.lat() - point1.lat()) / (point2.lng() - point1.lng());
-        // From equation of a straight line
-        return (lat - point1.lat() + slopeOfSegment * point1.lng()) / slopeOfSegment;
+    private double projectOnSegment(double lat, LngLat A, LngLat B) {
+        double slope = (y(B) - y(A)) / (x(B) - x(A));
+        return (lat - y(A) + slope * x(A)) / slope; // From equation of a straight line
+    }
+
+    private LngLat getCenterOfPolygon(LngLat[] vertices) {
+        double centerX = 0, centerY = 0;
+        for (LngLat v : vertices) {
+            centerX += x(v);
+            centerY += y(v);
+        }
+        return new LngLat(centerX / vertices.length, centerY / vertices.length);
     }
 
     /**
      * Checks if a given position lands on a given segment
-     * @param currentPos the position to check
-     * @param point1 one end of the segment
-     * @param point2 the other end of the segment
+     * @param C the position to check
+     * @param A one end of the segment
+     * @param B the other end of the segment
      * @return true if the position is geometrically on the segment, false otherwise
      */
-    private boolean isOnSegment(LngLat currentPos, LngLat point1, LngLat point2) {
-        if (doublesEqual(point1.lat(), point2.lat())) { // If segment is horizontal
-            return doublesEqual(currentPos.lat(), point1.lat())
-                    && isInBetween(point1.lng(), currentPos.lng(), point2.lng());
+    private boolean isOnSegment(LngLat C, LngLat A, LngLat B) {
+        if (doublesEqual(y(A), y(B))) { // If segment is horizontal
+            return doublesEqual(y(C), y(A))
+                    && isInBetween(x(A), x(C), x(B));
         }
-        else if (doublesEqual(point1.lng(), point2.lng())) { // If segment is vertical
-            return doublesEqual(currentPos.lng(), point1.lng())
-                    && isInBetween(point1.lat(), currentPos.lat(), point2.lat());
+        else if (doublesEqual(x(A), x(B))) { // If segment is vertical
+            return doublesEqual(x(C), x(A))
+                    && isInBetween(y(A), y(C), y(B));
         }
         else { // If segment is neither horizontal nor vertical
-            double projectedLng = projectOnSegment(currentPos.lat(), point1, point2);
-            return doublesEqual(currentPos.lng(), projectedLng)
-                    && isInBetween(point1.lng(), projectedLng, point2.lng());
+            double projectedLng = projectOnSegment(y(C), A, B);
+            return doublesEqual(x(C), projectedLng)
+                    && isInBetween(x(A), projectedLng, x(B));
         }
     }
 
     /**
      * Computes if ray intersects given segment
-     * @param currentPos position to start shooting the ray from, towards the right
-     * @param point1 one end of the segment
-     * @param point2 the other end of the segment
+     * @param C position to start shooting the ray from, towards the right
+     * @param A one end of the segment
+     * @param B the other end of the segment
      * @return true if ray intersects segment, false otherwise
      */
-    private boolean rayIntersectsSegment(LngLat currentPos, LngLat point1, LngLat point2) {
-        if (roundDouble(point1.lng()) == roundDouble(point2.lng())) {
-            return point1.lng() >= currentPos.lng() && isInBetween(point1.lat(), currentPos.lat(), point2.lat());
+    private boolean rayIntersectsSegment(LngLat C, LngLat A, LngLat B) {
+        if (doublesEqual(x(A), x(B))) {
+            return x(A) >= x(C) && isInBetween(y(A), y(C), y(B));
         }
         try {
-            double projectedLng = projectOnSegment(currentPos.lat(), point1, point2);
-            return currentPos.lng() < projectedLng && isInBetween(point1.lng(), projectedLng, point2.lng());
+            double x_proj = projectOnSegment(y(C), A, B);
+            return x(C) < x_proj && isInBetween(x(A), x_proj, x(B));
         }
         catch (Exception e) {
             return false;
         }
     }
 
+    private LngLat translateToOrigin(LngLat P, LngLat origin) {
+        return new LngLat(x(P) - x(origin), y(P) - y(origin));
+    }
+
+    private LngLat translateFromOrigin(LngLat P, LngLat origin) {
+        return new LngLat(x(P) + x(origin), y(P) + y(origin));
+    }
+
     /**
      * Rotates a vertex around the origin (0, 0), using the standard rotation matrix
-     * @param vertex the vertex to rotate
+     * @param P the vertex to rotate
      * @param angle the angle between the old position vector and new position vector
      * @return the new rotated vertex
      */
-    private LngLat rotateVertex(LngLat vertex, double angle) {
-        return new LngLat(
-                vertex.lng() * Math.cos(angle) - vertex.lat() * Math.sin(angle),
-                vertex.lng() * Math.sin(angle) + vertex.lat() * Math.cos(angle)
+    private LngLat rotateVertex(LngLat P, double angle, LngLat origin) {
+        LngLat translatedP = translateToOrigin(P, origin);
+        LngLat rotated = new LngLat(
+            x(translatedP) * Math.cos(angle) - y(translatedP) * Math.sin(angle),
+            x(translatedP) * Math.sin(angle) + y(translatedP) * Math.cos(angle)
         );
+        LngLat finalP = translateFromOrigin(rotated, origin);
+        return finalP;
     }
 
     /**
@@ -89,17 +108,27 @@ public class PointInPoly extends CoordinateCalculator {
      * @param angle the angle of rotation
      * @return an array of rotated vertices
      */
-    private LngLat[] rotatePlane(LngLat[] vertices, double angle) {
-        return Arrays.stream(vertices).map((LngLat vertex) -> rotateVertex(vertex, angle)).toArray(LngLat[]::new);
+    private LngLat[] rotatePlane(LngLat[] vertices, double angle, LngLat origin) {
+        return Arrays.stream(vertices).map((LngLat P) -> rotateVertex(P, angle, origin)).toArray(LngLat[]::new);
+    }
+
+    private boolean someVertexSameY(LngLat[] vertices, LngLat point) {
+        for (LngLat vertex : vertices) {
+            if (doublesEqual(y(vertex), y(point))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public boolean isInside() {
         // If y coordinate matches one or more vertices, rotate the plane by small degree
         LngLat[] vertices = polygon.vertices();
         LngLat currentPosition = point;
-        while (Arrays.stream(vertices).anyMatch((LngLat vertex) -> roundDouble(vertex.lat()) == roundDouble(point.lat()))) {
-            vertices = rotatePlane(vertices, Math.toRadians(1));
-            currentPosition = rotateVertex(point, Math.toRadians(1));
+        while (someVertexSameY(vertices, currentPosition)) {
+            LngLat origin = getCenterOfPolygon(vertices);
+            vertices = rotatePlane(vertices, Math.toRadians(2), origin);
+            currentPosition = rotateVertex(point, Math.toRadians(2), origin);
         }
 
         // Count intersections between a ray shooting to the right and each segment in 'region'

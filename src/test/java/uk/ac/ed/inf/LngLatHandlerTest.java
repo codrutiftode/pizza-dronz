@@ -90,4 +90,18 @@ public class LngLatHandlerTest extends TestCase {
         boolean isInside = handler.isInRegion(new LngLat(0, 2), region);
         assertFalse(isInside);
     }
+
+    public void testIsInRegionAdvanced1() {
+        OrdersProvider provider = new OrdersProvider();
+        LngLatHandler handler = new LngLatHandler();
+        boolean inside = handler.isInCentralArea(new LngLat(-3.1890, 55.9470), provider.getCentralArea());
+        assertFalse(inside);
+    }
+
+    public void testIsInRegionAdvanced2() {
+        OrdersProvider provider = new OrdersProvider();
+        LngLatHandler handler = new LngLatHandler();
+        boolean inside = handler.isInCentralArea(new LngLat(-3.193503548241182, 55.946233), provider.getCentralArea());
+        assertFalse(inside);
+    }
 }
