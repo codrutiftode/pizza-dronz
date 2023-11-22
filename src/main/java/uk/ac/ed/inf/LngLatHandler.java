@@ -9,9 +9,7 @@ import java.util.Arrays;
 public class LngLatHandler extends CoordinateCalculator implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling {
     @Override
     public double distanceTo(LngLat startPosition, LngLat endPosition) {
-        return Math.sqrt(Math.pow(endPosition.lat() - startPosition.lat(), 2) +
-                        Math.pow(endPosition.lng() - startPosition.lng(), 2)
-        );
+        return Math.sqrt(Math.pow(y(endPosition) - y(startPosition), 2) + Math.pow(x(endPosition) - x(startPosition), 2));
     }
 
     @Override
