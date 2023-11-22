@@ -25,7 +25,7 @@ public class PathFinderTest extends TestCase {
                 });
         LngLat targetLocation = new LngLat(7, 7);
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea,dropOff);
-        LngLat[] path = pathFinder.computePath(targetLocation);
+        LngLat[] path = pathFinder.computePath(dropOff, targetLocation);
         System.out.println(Arrays.toString(path));
     }
 }

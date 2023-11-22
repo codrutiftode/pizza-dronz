@@ -57,7 +57,7 @@ public class App
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         List<LngLat[]> paths = validOrders.stream()
-                .map(order -> pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location()))
+                .map(order -> pathFinder.computePath(CustomConstants.DROP_OFF_POINT, restaurantFinder.getRestaurantForOrder(order).location())) // TODO: change drop off point to last drop off point
                 .filter(Objects::nonNull)
                 .toList();
 

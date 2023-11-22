@@ -36,7 +36,7 @@ public class GeojsonTest extends TestCase {
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
 
         logger.log("Computing path...");
-        LngLat[] path = pathFinder.computePath(restaurantFinder.getRestaurantForOrder(firstOrder).location());
+        LngLat[] path = pathFinder.computePath(CustomConstants.DROP_OFF_POINT, restaurantFinder.getRestaurantForOrder(firstOrder).location());
         logger.log("Path computed!");
         GeoJsonFileWriter fileWriter = new GeoJsonFileWriter("results_test/drone.geojson");
         List<LngLat[]> dronePaths = new ArrayList<>();
@@ -69,12 +69,13 @@ public class GeojsonTest extends TestCase {
         GeoJsonFileWriter fileWriter = new GeoJsonFileWriter("results_test/drone.geojson");
         List<LngLat[]> dronePaths = new ArrayList<>();
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
+        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
 
         for (int i = 0; i < validOrders.size(); i++) {
             Order order = validOrders.get(i);
             PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
             logger.log("Computing path " + i + "...");
-            LngLat[] path = pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location());
+            LngLat[] path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
             logger.log("Path " + i + " computed!");
             dronePaths.add(path);
         }

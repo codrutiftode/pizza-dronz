@@ -19,8 +19,8 @@ public class PathFinder {
         this.dropOffPoint = dropOffPoint;
         this.navigator = new LngLatHandler();
     }
-    public LngLat[] computePath(LngLat targetLocation) {
-        LngLat[] pathToRestaurant = findPathBetween(dropOffPoint, targetLocation, null);
+    public LngLat[] computePath(LngLat start, LngLat targetLocation) {
+        LngLat[] pathToRestaurant = findPathBetween(start, targetLocation, null);
         if (!navigator.isInCentralArea(targetLocation, centralArea)) {
             LngLat[] pathToCentralArea = findPathToCentralArea(targetLocation);
             LngLat entrancePoint = pathToCentralArea[pathToCentralArea.length - 1];
