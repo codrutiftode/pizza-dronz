@@ -19,45 +19,44 @@ public class PathFinder {
         this.dropOffPoint = dropOffPoint;
         this.navigator = new LngLatHandler();
     }
-    public LngLat[] computePath(LngLat start, LngLat targetLocation) {
-        LngLat[] pathToRestaurant = findPathBetween(start, targetLocation, null);
-        LngLat[] restaurantMove = new LngLat[]{targetLocation};
-        LngLat[] dropOffMove = new LngLat[]{start};
-        if (!navigator.isInCentralArea(targetLocation, centralArea)) {
-            LngLat[] pathToCentralArea = findPathToCentralArea(targetLocation);
-            LngLat entrancePoint = pathToCentralArea[pathToCentralArea.length - 1];
-            LngLat[] pathFromRestaurant = findPathBetween(entrancePoint, dropOffPoint, null);
-            return concatPaths(pathToRestaurant,
-                    restaurantMove,
-                    pathToCentralArea,
-                    pathFromRestaurant,
-                    dropOffMove
-            );
+    public List<FlightMove> computePath(LngLat start, LngLat targetLocation) {
+        List<FlightMove> fullPath;
+        List<FlightMove> pathToRestaurant = findPathBetween(start, targetLocation, null);
+        FlightMove targetHoverMove = getHoverMove(getLastPosition(pathToRestaurant));
+        fullPath = new ArrayList<>(pathToRestaurant);
+        fullPath.add(targetHoverMove);
+
+        LngLat droneAtTarget = targetHoverMove.getTo();
+        if (!navigator.isInCentralArea(droneAtTarget, centralArea)) {
+            List<FlightMove> pathToCentralArea = findPathToCentralArea(droneAtTarget);
+            List<FlightMove> pathToDropOff = findPathBetween(getLastPosition(pathToCentralArea), dropOffPoint, null);
+            FlightMove dropOffHoverMove = getHoverMove(getLastPosition(pathToDropOff));
+            fullPath.addAll(pathToCentralArea);
+            fullPath.addAll(pathToDropOff);
+            fullPath.add(dropOffHoverMove);
         }
         else {
-            LngLat[] pathFromRestaurant = findPathBetween(targetLocation, dropOffPoint, null);
-            return concatPaths(pathToRestaurant,
-                    restaurantMove,
-                    pathFromRestaurant,
-                    dropOffMove
-            );
+            List<FlightMove> pathFromRestaurant = findPathBetween(droneAtTarget, dropOffPoint, null);
+            FlightMove dropOffHoverMove = getHoverMove(getLastPosition(pathFromRestaurant));
+            fullPath.addAll(pathFromRestaurant);
+            fullPath.add(dropOffHoverMove);
         }
+        return fullPath;
     }
 
-    private LngLat[] concatPaths(LngLat[]... paths) {
-        int totalLength = Arrays.stream(paths).mapToInt(path -> path.length).sum();
-        LngLat[] totalPath = new LngLat[totalLength];
-        int i = 0;
-        for (LngLat[] path : paths) {
-            for (LngLat lngLat : path) {
-                totalPath[i] = lngLat;
-                i++;
-            }
-        }
-        return totalPath;
+    private LngLat getLastPosition(List<FlightMove> moves) {
+        return moves.get(moves.size() - 1).getTo();
     }
 
-    private LngLat[] findPathToCentralArea(LngLat startPoint) {
+    private FlightMove getHoverMove(LngLat location) {
+        return new FlightMove(location,
+                location,
+                CustomConstants.ANGLE_WHEN_HOVER,
+                TimeKeeper.getTimeKeeper().getTime()
+        );
+    }
+
+    private List<FlightMove> findPathToCentralArea(LngLat startPoint) {
         LngLat[] caVertices = centralArea.vertices();
         ArrayList<LngLat> projections = new ArrayList<>();
         for (int i = 0; i < caVertices.length; i++) {
@@ -105,16 +104,18 @@ public class PathFinder {
         //      A* to it
     }
 
-    private LngLat[] findPathBetween(LngLat startPoint, LngLat endPoint, NamedRegion maxRegion) {
+    // TODO: implement max region for when back inside central area
+    private List<FlightMove> findPathBetween(LngLat startPoint, LngLat endPoint, NamedRegion maxRegion) {
         return naiveAStar(startPoint, endPoint);
     }
 
-    private LngLat[] naiveAStar(LngLat startPoint, LngLat endPoint) {
+    private List<FlightMove> naiveAStar(LngLat startPoint, LngLat endPoint) {
         ArrayList<FrontierNode> frontier = new ArrayList<>();
         FrontierNode currentNode = new FrontierNode(0, startPoint, null, -1);
         int counter = 0;
         while (!navigator.isCloseTo(currentNode.currentPosition, endPoint)) {
             List<FrontierNode> nextMoves = filterNoFly(currentNode.getNextMoves());
+            currentNode.stampTime();
             frontier.addAll(nextMoves);
             int lowestCostIndex = pickLowestCost(frontier, endPoint);
             currentNode = frontier.remove(lowestCostIndex);
@@ -126,18 +127,25 @@ public class PathFinder {
         }
 
         // Construct path from saved graph traversal nodes
-        ArrayList<LngLat> pathList = new ArrayList<>();
+        ArrayList<FrontierNode> nodesList = new ArrayList<>();
         while (currentNode.getPreviousNode() != null) {
-            pathList.add(currentNode.getCurrentPosition());
+            nodesList.add(currentNode);
             currentNode = currentNode.getPreviousNode();
         }
-        Collections.reverse(pathList);
-        LngLat[] path = new LngLat[pathList.size()];
-        for (int i = 0; i < path.length; i++) {
-            path[i] = pathList.get(i);
-        }
+        Collections.reverse(nodesList);
 
-        return path;
+        ArrayList<FlightMove> moveList = new ArrayList<>();
+        for (int i = 0; i + 1< nodesList.size(); i++) {
+            FrontierNode node = nodesList.get(i);
+            FrontierNode nextNode = nodesList.get(i + 1);
+            FlightMove move = new FlightMove(node.getCurrentPosition(),
+                    nextNode.getCurrentPosition(),
+                    node.getPreviousMove() * 22.5,
+                    node.getTimestamp()
+            );
+            moveList.add(move);
+        }
+        return moveList;
     }
 
     private List<FrontierNode> filterNoFly(List<FrontierNode> possibleMoves) {
@@ -199,12 +207,21 @@ public class PathFinder {
         private LngLat currentPosition;
         private FrontierNode previousNode;
         private int previousMove;
+        private long timestamp = -1;
 
         public FrontierNode(double costSoFar, LngLat currentPosition, FrontierNode previousNode, int previousMove) {
             this.costSoFar = costSoFar;
             this.currentPosition = currentPosition;
             this.previousNode = previousNode;
             this.previousMove = previousMove;
+        }
+
+        public int getPreviousMove() {
+            return this.previousMove;
+        }
+
+        public long getTimestamp() {
+            return this.timestamp;
         }
 
         public double getCostSoFar() {
@@ -229,6 +246,10 @@ public class PathFinder {
                 nextMoves.add(newNode);
             }
             return nextMoves;
+        }
+
+        public void stampTime() {
+            this.timestamp = TimeKeeper.getTimeKeeper().getTime();
         }
     }
 }

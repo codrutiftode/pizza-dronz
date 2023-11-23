@@ -57,13 +57,16 @@ public class App
         // Find paths
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
-        List<LngLat[]> paths = new ArrayList<>();
+        List<List<FlightMove>> paths = new ArrayList<>();
         LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
+        TimeKeeper keeper = TimeKeeper.getTimeKeeper();
+        keeper.startKeepingTime();
+
         for (Order order : validOrders) {
-            LngLat[] path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+            List<FlightMove> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
             if (path != null) {
                 paths.add(path);
-                lastDropOff = path[path.length - 1];
+                lastDropOff = path.get(path.size() - 1).getTo();
             }
         }
 

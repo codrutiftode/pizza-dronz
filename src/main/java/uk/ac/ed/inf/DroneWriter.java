@@ -14,7 +14,7 @@ public class DroneWriter extends CustomFileWriter {
         super(filepath);
     }
 
-    public void writePaths(List<LngLat[]> paths) {
+    public void writePaths(List<List<FlightMove>> paths) {
         List<LngLat> dronePath = compileDronePath(paths);
         FeatureCollection fc = buildGeoJson(dronePath);
         String output = new GsonBuilder().setPrettyPrinting().create().toJson(fc);
@@ -42,10 +42,12 @@ public class DroneWriter extends CustomFileWriter {
         return fc;
     }
 
-    private List<LngLat> compileDronePath(List<LngLat[]> paths) {
+    private List<LngLat> compileDronePath(List<List<FlightMove>> paths) {
         List<LngLat> dronePath = new ArrayList<>();
-        for (LngLat[] path : paths) {
-            dronePath.addAll(Arrays.stream(path).toList());
+        for (List<FlightMove> path : paths) {
+            dronePath.addAll(path.stream().map(FlightMove::getFrom).toList());
+            FlightMove lastMove = path.get(path.size() - 1);
+            dronePath.add(lastMove.getTo());
         }
         return dronePath;
     }

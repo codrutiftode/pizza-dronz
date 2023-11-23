@@ -5,6 +5,7 @@ import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 
 import java.util.Arrays;
+import java.util.List;
 
 public class PathFinderTest extends TestCase {
     public void test1() {
@@ -25,7 +26,7 @@ public class PathFinderTest extends TestCase {
                 });
         LngLat targetLocation = new LngLat(7, 7);
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea,dropOff);
-        LngLat[] path = pathFinder.computePath(dropOff, targetLocation);
-        System.out.println(Arrays.toString(path));
+        List<FlightMove> path = pathFinder.computePath(dropOff, targetLocation);
+        System.out.println(Arrays.toString(path.toArray()));
     }
 }
