@@ -59,9 +59,6 @@ public class App
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         List<List<FlightMove>> paths = new ArrayList<>();
         LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
-        TimeKeeper keeper = TimeKeeper.getTimeKeeper();
-        keeper.startKeepingTime();
-
         for (Order order : validOrders) {
             List<FlightMove> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
             if (path != null) {

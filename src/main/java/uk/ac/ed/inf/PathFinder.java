@@ -20,6 +20,11 @@ public class PathFinder {
         this.navigator = new LngLatHandler();
     }
     public List<FlightMove> computePath(LngLat start, LngLat targetLocation) {
+        // Start timer if not started
+        if (!TimeKeeper.getTimeKeeper().isStarted()) {
+            TimeKeeper.getTimeKeeper().startKeepingTime();
+        }
+
         List<FlightMove> fullPath;
         List<FlightMove> pathToRestaurant = findPathBetween(start, targetLocation, null);
         FlightMove targetHoverMove = getHoverMove(getLastPosition(pathToRestaurant));
