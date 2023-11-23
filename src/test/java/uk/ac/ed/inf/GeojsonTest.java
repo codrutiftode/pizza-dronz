@@ -9,9 +9,7 @@ import uk.ac.ed.inf.ilp.data.Restaurant;
 
 import java.io.IOException;
 import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
-import java.time.temporal.TemporalAmount;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -38,15 +36,10 @@ public class GeojsonTest extends TestCase {
         logger.log("Computing path...");
         LngLat[] path = pathFinder.computePath(CustomConstants.DROP_OFF_POINT, restaurantFinder.getRestaurantForOrder(firstOrder).location());
         logger.log("Path computed!");
-        GeoJsonFileWriter fileWriter = new GeoJsonFileWriter("results_test/drone.geojson");
+        DroneWriter fileWriter = new DroneWriter("results_test/drone.geojson");
         List<LngLat[]> dronePaths = new ArrayList<>();
         dronePaths.add(path);
-        try {
-            fileWriter.writePaths(dronePaths);
-        }
-        catch(IOException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
+        fileWriter.writePaths(dronePaths);
     }
 
     public void test2() {
@@ -66,7 +59,7 @@ public class GeojsonTest extends TestCase {
                 .toList();
         logger.log("No. valid orders: " + validOrders.size());
 
-        GeoJsonFileWriter fileWriter = new GeoJsonFileWriter("results_test/drone.geojson");
+        DroneWriter fileWriter = new DroneWriter("results_test/drone.geojson");
         List<LngLat[]> dronePaths = new ArrayList<>();
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
@@ -79,12 +72,7 @@ public class GeojsonTest extends TestCase {
             logger.log("Path " + i + " computed!");
             dronePaths.add(path);
         }
-
-        try {
-            fileWriter.writePaths(dronePaths);
-        } catch (IOException e) {
-            System.out.println("Error: " + e.getMessage());
-        }
+        fileWriter.writePaths(dronePaths);
     }
 
     public void testCountValidOrders() {

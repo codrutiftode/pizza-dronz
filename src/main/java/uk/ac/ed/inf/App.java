@@ -5,9 +5,10 @@ import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
+
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 
 /**
  * Hello world!
@@ -56,14 +57,24 @@ public class App
         // Find paths
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
-        List<LngLat[]> paths = validOrders.stream()
-                .map(order -> pathFinder.computePath(CustomConstants.DROP_OFF_POINT, restaurantFinder.getRestaurantForOrder(order).location())) // TODO: change drop off point to last drop off point
-                .filter(Objects::nonNull)
-                .toList();
+        List<LngLat[]> paths = new ArrayList<>();
+        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
+        for (Order order : validOrders) {
+            LngLat[] path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+            if (path != null) {
+                paths.add(path);
+                lastDropOff = path[path.length - 1];
+            }
+        }
 
-        JsonFileWriter deliveriesWriter = new JsonFileWriter("resultfiles/deliveries.json");
-        JsonFileWriter flightpathWriter = new JsonFileWriter("resultfiles/flightpath.json");
-        GeoJsonFileWriter droneWriter = new GeoJsonFileWriter("resultfiles/drone.json");
-        // TODO: finish this
+        // Output to files
+        DeliveriesWriter deliveriesWriter = new DeliveriesWriter("resultfiles/deliveries.json");
+        deliveriesWriter.writeDeliveries(Arrays.stream(orders).toList());
+
+        FlightpathWriter flightpathWriter = new FlightpathWriter("resultfiles/flightpath.json");
+        flightpathWriter.writeFlightpath();
+
+        DroneWriter droneWriter = new DroneWriter("resultfiles/drone.json");
+        droneWriter.writePaths(paths);
     }
 }

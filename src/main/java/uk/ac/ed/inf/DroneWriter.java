@@ -1,5 +1,6 @@
 package uk.ac.ed.inf;
 
+import com.google.gson.GsonBuilder;
 import org.geojson.*;
 import uk.ac.ed.inf.ilp.data.LngLat;
 
@@ -8,22 +9,27 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class GeoJsonFileWriter extends JsonFileWriter {
-    public GeoJsonFileWriter(String filepath) {
+public class DroneWriter extends CustomFileWriter {
+    public DroneWriter(String filepath) {
         super(filepath);
     }
 
-    public void writePaths(List<LngLat[]> paths) throws IOException {
+    public void writePaths(List<LngLat[]> paths) {
         List<LngLat> dronePath = compileDronePath(paths);
         FeatureCollection fc = buildGeoJson(dronePath);
-        this.write(fc);
+        String output = new GsonBuilder().setPrettyPrinting().create().toJson(fc);
+        try {
+            this.write(output);
+        }
+        catch(IOException e) {
+            CustomLogger.getLogger().error("Failed to write drone file:\n" + e.getMessage());
+        }
     }
 
     private FeatureCollection buildGeoJson(List<LngLat> dronePath) {
         FeatureCollection fc = new FeatureCollection();
         Feature feature = new Feature();
         LineString lineString = new LineString();
-
 
         for (LngLat move : dronePath) {
             LngLatAlt coordinates = new LngLatAlt();
