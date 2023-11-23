@@ -1,6 +1,7 @@
 package uk.ac.ed.inf;
 
-import com.google.gson.GsonBuilder;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.*;
 import org.geojson.*;
 import uk.ac.ed.inf.ilp.data.LngLat;
 
@@ -16,8 +17,8 @@ public class DroneWriter extends CustomFileWriter {
 
     public void writePaths(List<List<FlightMove>> paths) {
         List<LngLat> dronePath = compileDronePath(paths);
-        FeatureCollection fc = buildGeoJson(dronePath);
-        String output = new GsonBuilder().setPrettyPrinting().create().toJson(fc);
+        JsonElement geoJson = buildGeoJson(dronePath);
+        String output = new GsonBuilder().setPrettyPrinting().create().toJson(geoJson);
         try {
             this.write(output);
         }
@@ -26,20 +27,30 @@ public class DroneWriter extends CustomFileWriter {
         }
     }
 
-    private FeatureCollection buildGeoJson(List<LngLat> dronePath) {
-        FeatureCollection fc = new FeatureCollection();
-        Feature feature = new Feature();
-        LineString lineString = new LineString();
+    private JsonElement buildGeoJson(List<LngLat> dronePath) {
+        JsonObject featureCollection = new JsonObject();
+        JsonArray features = new JsonArray();
+        featureCollection.add("type", new JsonPrimitive("FeatureCollection"));
+        featureCollection.add("features", features);
+
+        JsonObject feature = new JsonObject();
+        features.add(feature);
+        JsonObject lineString = new JsonObject();
+        feature.add("type", new JsonPrimitive("Feature"));
+        feature.add("geometry", lineString);
+        feature.add("properties", new JsonObject());
+
+        JsonArray allCoordinates = new JsonArray();
+        lineString.add("type", new JsonPrimitive("LineString"));
+        lineString.add("coordinates", allCoordinates);
 
         for (LngLat move : dronePath) {
-            LngLatAlt coordinates = new LngLatAlt();
-            coordinates.setLatitude(move.lat());
-            coordinates.setLongitude(move.lng());
-            lineString.add(coordinates);
+            JsonArray coordinates = new JsonArray();
+            coordinates.add(move.lat());
+            coordinates.add(move.lng());
+            allCoordinates.add(coordinates);
         }
-        feature.setGeometry(lineString);
-        fc.add(feature);
-        return fc;
+        return featureCollection;
     }
 
     private List<LngLat> compileDronePath(List<List<FlightMove>> paths) {
