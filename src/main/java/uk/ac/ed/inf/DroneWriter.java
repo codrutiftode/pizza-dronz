@@ -46,8 +46,8 @@ public class DroneWriter extends CustomFileWriter {
 
         for (LngLat move : dronePath) {
             JsonArray coordinates = new JsonArray();
-            coordinates.add(move.lat());
             coordinates.add(move.lng());
+            coordinates.add(move.lat());
             allCoordinates.add(coordinates);
         }
         return featureCollection;
