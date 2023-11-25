@@ -6,6 +6,8 @@ import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
+import uk.ac.ed.inf.pathFinder.FlightMove;
+import uk.ac.ed.inf.pathFinder.PathFinder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -30,7 +32,7 @@ public class PathFinderTest extends TestCase {
                 });
         LngLat targetLocation = new LngLat(7, 7);
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea,dropOff);
-        List<FlightMove> path = pathFinder.computePath(dropOff, targetLocation);
+        List<FlightMove<LngLat>> path = pathFinder.computePath(dropOff, targetLocation);
         System.out.println(Arrays.toString(path.toArray()));
     }
 
@@ -41,7 +43,16 @@ public class PathFinderTest extends TestCase {
         OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
         Restaurant[] restaurants = apiClient.getRestaurants();
         Order[] orders = apiClient.getOrders(targetDate);
-        NamedRegion centralArea = apiClient.getCentralArea();
+        NamedRegion centralArea = new NamedRegion("central", new LngLat[]{
+//                new LngLat(-3.1925, 55.9436),
+//                new LngLat(-3.1925, 55.9426),
+                new LngLat(-3.1937, 55.9437),
+                new LngLat(	-3.1938, 55.9426),
+                new LngLat(-3.1860, 55.9426),
+                new LngLat(-3.1860, 55.9451),
+                new LngLat(	-3.1876, 55.9453),
+                new LngLat(-3.1876, 55.9439)
+        });
         NamedRegion[] noFlyZones = apiClient.getNoFlyZones();
 
         OrderValidator orderValidator = new OrderValidator();
@@ -56,10 +67,10 @@ public class PathFinderTest extends TestCase {
         logger.log("Computing path...");
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         Order order = validOrders.get(0);
-        List<FlightMove> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+        List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
         logger.log("Path computed.");
 
-        List<List<FlightMove>> list = new ArrayList<>();
+        List<List<FlightMove<LngLat>>> list = new ArrayList<>();
         list.add(path);
         fileWriter.writePaths(list);
     }

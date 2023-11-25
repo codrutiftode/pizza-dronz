@@ -1,6 +1,8 @@
 package uk.ac.ed.inf;
 
 import com.google.gson.*;
+import uk.ac.ed.inf.ilp.data.LngLat;
+import uk.ac.ed.inf.pathFinder.FlightMove;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
@@ -12,7 +14,7 @@ public class FlightpathWriter extends CustomFileWriter {
         super(flightpath);
     }
 
-    public void writeFlightpath(List<List<FlightMove>> paths) {
+    public void writeFlightpath(List<List<FlightMove<LngLat>>> paths) {
         Gson gson = new GsonBuilder().registerTypeAdapter(FlightMove.class, new FlightpathSerialiser()).create();
         String output = gson.toJson(flatten(paths));
         try {
@@ -27,9 +29,9 @@ public class FlightpathWriter extends CustomFileWriter {
         return listOfLists.stream().flatMap(List::stream).collect(Collectors.toList());
     }
 
-    private static class FlightpathSerialiser implements JsonSerializer<FlightMove> {
+    private static class FlightpathSerialiser implements JsonSerializer<FlightMove<LngLat>> {
         @Override
-        public JsonElement serialize(FlightMove flightMove, Type type, JsonSerializationContext jsonSerializationContext) {
+        public JsonElement serialize(FlightMove<LngLat> flightMove, Type type, JsonSerializationContext jsonSerializationContext) {
             JsonObject object = new JsonObject();
             double fromLongitude = flightMove.getFrom().lng();
             double fromLatitude = flightMove.getFrom().lat();

@@ -5,6 +5,8 @@ import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
+import uk.ac.ed.inf.pathFinder.FlightMove;
+import uk.ac.ed.inf.pathFinder.PathFinder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,11 +59,11 @@ public class App
         // Find paths
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
-        List<List<FlightMove>> paths = new ArrayList<>();
+        List<List<FlightMove<LngLat>>> paths = new ArrayList<>();
         LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
         for (Order order : validOrders) {
             logger.log("Path found");
-            List<FlightMove> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+            List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
             if (path != null) {
                 path.forEach(move -> move.assignToOrder(order.getOrderNo()));
                 paths.add(path);

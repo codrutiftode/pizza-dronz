@@ -1,13 +1,11 @@
 package uk.ac.ed.inf;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.*;
-import org.geojson.*;
 import uk.ac.ed.inf.ilp.data.LngLat;
+import uk.ac.ed.inf.pathFinder.FlightMove;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class DroneWriter extends CustomFileWriter {
@@ -15,7 +13,7 @@ public class DroneWriter extends CustomFileWriter {
         super(filepath);
     }
 
-    public void writePaths(List<List<FlightMove>> paths) {
+    public void writePaths(List<List<FlightMove<LngLat>>> paths) {
         List<LngLat> dronePath = compileDronePath(paths);
         JsonElement geoJson = buildGeoJson(dronePath);
         String output = new GsonBuilder().setPrettyPrinting().create().toJson(geoJson);
@@ -53,11 +51,11 @@ public class DroneWriter extends CustomFileWriter {
         return featureCollection;
     }
 
-    private List<LngLat> compileDronePath(List<List<FlightMove>> paths) {
+    private List<LngLat> compileDronePath(List<List<FlightMove<LngLat>>> paths) {
         List<LngLat> dronePath = new ArrayList<>();
-        for (List<FlightMove> path : paths) {
+        for (List<FlightMove<LngLat>> path : paths) {
             dronePath.addAll(path.stream().map(FlightMove::getFrom).toList());
-            FlightMove lastMove = path.get(path.size() - 1);
+            FlightMove<LngLat> lastMove = path.get(path.size() - 1);
             dronePath.add(lastMove.getTo());
         }
         return dronePath;

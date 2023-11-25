@@ -3,10 +3,12 @@ package uk.ac.ed.inf;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
+import uk.ac.ed.inf.pathFinder.INavigator;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
-public class LngLatHandler extends CoordinateCalculator implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling {
+public class LngLatHandler extends CoordinateCalculator implements uk.ac.ed.inf.ilp.interfaces.LngLatHandling, INavigator<LngLat> {
     @Override
     public double distanceTo(LngLat startPosition, LngLat endPosition) {
         return Math.sqrt(Math.pow(y(endPosition) - y(startPosition), 2) + Math.pow(x(endPosition) - x(startPosition), 2));
@@ -38,6 +40,19 @@ public class LngLatHandler extends CoordinateCalculator implements uk.ac.ed.inf.
         boolean condition2 = isInBetweenEquals(y(A), y(D), y(B));
         boolean condition3 = doublesEqual((x(B) - x(A)) * (y(D) - y(A)), (x(D) - x(A)) * (y(B) - y(A)));
         return condition1 && condition2 && condition3;
+    }
+
+    public List<LngLat> projectPointOnSegments(LngLat p, LngLat[] vertices) {
+        ArrayList<LngLat> projections = new ArrayList<>();
+        for (int i = 0; i < vertices.length; i++) {
+            LngLat vertex1 = vertices[i];
+            LngLat vertex2 = vertices[(i + 1) % vertices.length];
+            LngLat projection = projectOnLine(p, vertex1, vertex2);
+            if (isPointOnSegment(projection, vertex1, vertex2)) {
+                projections.add(projection);
+            }
+        }
+        return projections;
     }
 
     /**
