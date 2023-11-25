@@ -1,9 +1,13 @@
 package uk.ac.ed.inf;
 
 import junit.framework.TestCase;
+import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
+import uk.ac.ed.inf.ilp.data.Order;
+import uk.ac.ed.inf.ilp.data.Restaurant;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,5 +32,35 @@ public class PathFinderTest extends TestCase {
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea,dropOff);
         List<FlightMove> path = pathFinder.computePath(dropOff, targetLocation);
         System.out.println(Arrays.toString(path.toArray()));
+    }
+
+    public void testOnePath() {
+        CustomLogger logger = CustomLogger.getLogger();
+        String apiUrl = "https://ilp-rest.azurewebsites.net/";
+        String targetDate = "2023-11-15";
+        OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
+        Restaurant[] restaurants = apiClient.getRestaurants();
+        Order[] orders = apiClient.getOrders(targetDate);
+        NamedRegion centralArea = apiClient.getCentralArea();
+        NamedRegion[] noFlyZones = apiClient.getNoFlyZones();
+
+        OrderValidator orderValidator = new OrderValidator();
+        List<Order> validOrders = Arrays.stream(orders)
+                .map(order -> orderValidator.validateOrder(order, restaurants))
+                .filter(order -> order.getOrderValidationCode() == OrderValidationCode.NO_ERROR)
+                .toList();
+
+        DroneWriter fileWriter = new DroneWriter("results_test/drone.geojson");
+        RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
+        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
+        logger.log("Computing path...");
+        PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
+        Order order = validOrders.get(0);
+        List<FlightMove> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+        logger.log("Path computed.");
+
+        List<List<FlightMove>> list = new ArrayList<>();
+        list.add(path);
+        fileWriter.writePaths(list);
     }
 }

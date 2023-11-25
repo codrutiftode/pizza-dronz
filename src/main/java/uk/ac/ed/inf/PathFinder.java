@@ -20,13 +20,13 @@ public class PathFinder {
         this.navigator = new LngLatHandler();
     }
     public List<FlightMove> computePath(LngLat start, LngLat targetLocation) {
-        // Start timer if not started
+//        // Start timer if not started
         if (!TimeKeeper.getTimeKeeper().isStarted()) {
             TimeKeeper.getTimeKeeper().startKeepingTime();
         }
 
         List<FlightMove> fullPath;
-        List<FlightMove> pathToRestaurant = findPathBetween(start, targetLocation, null);
+        List<FlightMove> pathToRestaurant = findPathBetween(this.dropOffPoint, targetLocation, null);
         FlightMove targetHoverMove = getHoverMove(getLastPosition(pathToRestaurant));
         fullPath = new ArrayList<>(pathToRestaurant);
         fullPath.add(targetHoverMove);
@@ -68,7 +68,6 @@ public class PathFinder {
             LngLat vertex1 = caVertices[i];
             LngLat vertex2 = caVertices[(i + 1) % caVertices.length];
             LngLat projection = navigator.projectOnLine(startPoint, vertex1, vertex2);
-            CustomLogger.getLogger().log("Projection " + projection.toString());
             if (navigator.isPointOnSegment(projection, vertex1, vertex2)) {
                 projections.add(projection);
             }
@@ -115,21 +114,31 @@ public class PathFinder {
     }
 
     private List<FlightMove> naiveAStar(LngLat startPoint, LngLat endPoint) {
-        ArrayList<FrontierNode> frontier = new ArrayList<>();
-        FrontierNode currentNode = new FrontierNode(0, startPoint, null, -1);
+        PriorityQueue<FrontierNode> frontier = new PriorityQueue<>();
+        FrontierNode currentNode = new FrontierNode(0, startPoint, null, -1, endPoint);
         int counter = 0;
-        while (!navigator.isCloseTo(currentNode.currentPosition, endPoint)) {
+        List<FrontierNode> chosenNodes = new ArrayList<>();
+        while (!navigator.isCloseTo(currentNode.getCurrentPosition(), endPoint)) {
             List<FrontierNode> nextMoves = filterNoFly(currentNode.getNextMoves());
+            chosenNodes.add(currentNode);
+            FrontierNode eastMove = new FrontierNode(0, navigator.nextPosition(currentNode.getCurrentPosition(), Math.toRadians(180)), null, -1, endPoint);
+            FrontierNode slightSouthMove = new FrontierNode(0, navigator.nextPosition(currentNode.getCurrentPosition(), Math.toRadians(202.5)), null, -1, endPoint);
+            chosenNodes.add(slightSouthMove);
+            System.out.println(currentNode.getPreviousMove());
+
             currentNode.stampTime();
             frontier.addAll(nextMoves);
-            int lowestCostIndex = pickLowestCost(frontier, endPoint);
-            currentNode = frontier.remove(lowestCostIndex);
-
-            counter += 1;
-            if (counter > 3000) {
+            currentNode = frontier.poll();
+            if (currentNode == null) { // TODO: consider this case
                 break;
             }
+            if (counter < 20000) {
+                counter += 1;
+            }
+            else break;
         }
+
+//        return chosenNodes.stream().map(n -> new FlightMove(n.getCurrentPosition(), n.getCurrentPosition(), 0, 0)).toList();
 
         // Construct path from saved graph traversal nodes
         ArrayList<FrontierNode> nodesList = new ArrayList<>();
@@ -192,9 +201,9 @@ public class PathFinder {
         int lowestNodeIndex = 0;
         for (int i = 0; i < frontier.size(); i++) {
             FrontierNode node = frontier.get(i);
-            double h = heuristicCost(node.currentPosition, endPoint);
+            double h = heuristicCost(node.getCurrentPosition(), endPoint);
             double g = node.getCostSoFar();
-            double cost = h * 1.2 + g;
+            double cost = h + g;
             if (cost < minCost) {
                 minCost = cost;
                 lowestNodeIndex = i;
@@ -207,18 +216,20 @@ public class PathFinder {
         return navigator.distanceTo(start, end);
     }
 
-    private class FrontierNode {
+    private class FrontierNode implements Comparable<FrontierNode> {
         private double costSoFar;
         private LngLat currentPosition;
         private FrontierNode previousNode;
         private int previousMove;
         private long timestamp = -1;
+        private LngLat endPoint;
 
-        public FrontierNode(double costSoFar, LngLat currentPosition, FrontierNode previousNode, int previousMove) {
+        public FrontierNode(double costSoFar, LngLat currentPosition, FrontierNode previousNode, int previousMove, LngLat endPoint) {
             this.costSoFar = costSoFar;
             this.currentPosition = currentPosition;
             this.previousNode = previousNode;
             this.previousMove = previousMove;
+            this.endPoint = endPoint;
         }
 
         public int getPreviousMove() {
@@ -244,10 +255,12 @@ public class PathFinder {
         public List<FrontierNode> getNextMoves() {
             List<FrontierNode> nextMoves = new ArrayList<>();
             final double costOfOneMove = SystemConstants.DRONE_MOVE_DISTANCE;
-            for (int i = 0; i < 16; i++) {
-                if (i == previousMove) continue;
-                LngLat nextPosition = navigator.nextPosition(currentPosition, Math.toRadians(i * 22.5));
-                FrontierNode newNode = new FrontierNode(costSoFar + costOfOneMove, nextPosition, this, i);
+            int circleDivisions = 16;
+            double angleIncrement = 360.0 / circleDivisions;
+            for (int i = 0; i < circleDivisions; i++) {
+                if ((i + 8) % 16 == previousMove) continue;
+                LngLat nextPosition = navigator.nextPosition(currentPosition, Math.toRadians(i * angleIncrement));
+                FrontierNode newNode = new FrontierNode(costSoFar + costOfOneMove, nextPosition, this, i, endPoint);
                 nextMoves.add(newNode);
             }
             return nextMoves;
@@ -255,6 +268,20 @@ public class PathFinder {
 
         public void stampTime() {
             this.timestamp = TimeKeeper.getTimeKeeper().getTime();
+        }
+
+        public double computeCost() {
+            double h = heuristicCost(getCurrentPosition(), endPoint);
+            double g = getCostSoFar();
+            return h * 1.05 + g;
+        }
+
+        @Override
+        public int compareTo(FrontierNode otherNode) {
+            double result = computeCost() - otherNode.computeCost();
+            if (result > 0) return 1;
+            else if (result < 0) return -1;
+            return 0;
         }
     }
 }

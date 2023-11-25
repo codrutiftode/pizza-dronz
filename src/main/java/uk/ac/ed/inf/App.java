@@ -60,21 +60,31 @@ public class App
         List<List<FlightMove>> paths = new ArrayList<>();
         LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
         for (Order order : validOrders) {
+            logger.log("Path found");
             List<FlightMove> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
             if (path != null) {
+                path.forEach(move -> move.assignToOrder(order.getOrderNo()));
                 paths.add(path);
                 lastDropOff = path.get(path.size() - 1).getTo();
             }
         }
 
         // Output to files
-        DeliveriesWriter deliveriesWriter = new DeliveriesWriter("resultfiles/deliveries.json");
+        DeliveriesWriter deliveriesWriter = new DeliveriesWriter(
+                String.format(CustomConstants.DELIVERIES_FILE_PATH_FORMAT, targetDate)
+        );
         deliveriesWriter.writeDeliveries(Arrays.stream(orders).toList());
 
-        FlightpathWriter flightpathWriter = new FlightpathWriter("resultfiles/flightpath.json");
-        flightpathWriter.writeFlightpath();
+        FlightpathWriter flightpathWriter = new FlightpathWriter(
+                String.format(CustomConstants.FLIGHTPATH_FILE_PATH_FORMAT, targetDate)
+        );
+        flightpathWriter.writeFlightpath(paths);
 
-        DroneWriter droneWriter = new DroneWriter("resultfiles/drone.json");
+        DroneWriter droneWriter = new DroneWriter(
+                String.format(CustomConstants.DRONE_FILE_PATH_FORMAT, targetDate)
+        );
         droneWriter.writePaths(paths);
+
+        logger.log("App finished.");
     }
 }

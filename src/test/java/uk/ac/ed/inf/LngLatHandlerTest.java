@@ -5,6 +5,12 @@ import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 
 public class LngLatHandlerTest extends TestCase {
+
+    public void test1() {
+        LngLatHandler handler = new LngLatHandler();
+        System.out.println(handler.nextPosition(new LngLat(1, 2), Math.toRadians(270)));
+    }
+
     public void testDistanceTo()
     {
         LngLatHandler handler = new LngLatHandler();

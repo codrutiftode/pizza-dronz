@@ -10,6 +10,9 @@ public class CoordinateCalculator {
     }
 
     protected double y(LngLat p) {
+        if (p == null) {
+            int a = 1 + 2;
+        }
         return p.lat();
     }
 
