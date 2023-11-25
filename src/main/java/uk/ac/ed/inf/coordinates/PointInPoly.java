@@ -2,12 +2,16 @@ package uk.ac.ed.inf.coordinates;
 
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
-
 import java.util.Arrays;
 
+/**
+ * Tests if a position is within a region's polygon, using ray casting.
+ * This draws a straight line to the right and counts the times it intersects the polygon
+ * If it is odd, the position is within the region, otherwise it is outside.
+ */
 public class PointInPoly extends CoordinateCalculator {
-    private LngLat point;
-    private NamedRegion polygon;
+    private final LngLat point;
+    private final NamedRegion polygon;
     public PointInPoly(LngLat point, NamedRegion polygon) {
         this.point = point;
         this.polygon = polygon;
