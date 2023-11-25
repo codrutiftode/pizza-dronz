@@ -1,11 +1,9 @@
-package uk.ac.ed.inf;
+package uk.ac.ed.inf.api;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonSyntaxException;
+import uk.ac.ed.inf.CustomLogger;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
@@ -13,12 +11,12 @@ import uk.ac.ed.inf.ilp.gsonUtils.LocalDateDeserializer;
 
 import java.time.LocalDate;
 
+import static uk.ac.ed.inf.CustomConstants.*;
+
+/**
+ * Connects to server and parses the order information
+ */
 public class OrdersAPIClient extends APIClient {
-    private final static String ALIVE_ENDPOINT = "isAlive";
-    private final static String RESTAURANTS_ENDPOINT = "restaurants";
-    private final static String ORDERS_ENDPOINT = "orders";
-    private final static String CENTRAL_AREA_ENDPOINT = "centralArea";
-    private final static String NO_FLY_ZONES_ENDPOINT = "noFlyZones";
 
     public OrdersAPIClient(String apiUrl) {
         super(apiUrl);
@@ -26,7 +24,7 @@ public class OrdersAPIClient extends APIClient {
 
     public boolean checkAliveAPI() {
         String data = this.requestGET(this.createEndpoint(ALIVE_ENDPOINT));
-        return Boolean.parseBoolean(data); // TODO: what if parse error
+        return Boolean.TRUE.equals(parseData(data, Boolean.class));
     }
 
     public Restaurant[] getRestaurants() {
@@ -65,6 +63,13 @@ public class OrdersAPIClient extends APIClient {
         return parseData(apiResponse, NamedRegion[].class);
     }
 
+    /**
+     * Tries to parse a given string into the given type
+     * @param data the string
+     * @param resultingType the type to interpret the string as
+     * @return the equivalent Java Object of type resultingType if successful
+     * @param <T> Allows for resultingType to be any type
+     */
     private <T> T parseData(String data, Class<T> resultingType) {
         GsonBuilder builder = new GsonBuilder();
         builder.registerTypeAdapter(LocalDate.class, new LocalDateDeserializer());

@@ -1,7 +1,7 @@
 package uk.ac.ed.inf.pathFinder;
 
 import uk.ac.ed.inf.CustomConstants;
-import uk.ac.ed.inf.LngLatHandler;
+import uk.ac.ed.inf.coordinates.LngLatHandler;
 import uk.ac.ed.inf.TimeKeeper;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;

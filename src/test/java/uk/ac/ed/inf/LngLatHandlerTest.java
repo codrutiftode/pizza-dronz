@@ -1,6 +1,7 @@
 package uk.ac.ed.inf;
 
 import junit.framework.TestCase;
+import uk.ac.ed.inf.coordinates.LngLatHandler;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 

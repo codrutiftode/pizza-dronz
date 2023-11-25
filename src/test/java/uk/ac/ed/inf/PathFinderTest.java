@@ -1,6 +1,9 @@
 package uk.ac.ed.inf;
 
 import junit.framework.TestCase;
+import uk.ac.ed.inf.api.OrderValidator;
+import uk.ac.ed.inf.api.OrdersAPIClient;
+import uk.ac.ed.inf.api.RestaurantFinder;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
@@ -8,6 +11,7 @@ import uk.ac.ed.inf.ilp.data.Order;
 import uk.ac.ed.inf.ilp.data.Restaurant;
 import uk.ac.ed.inf.pathFinder.FlightMove;
 import uk.ac.ed.inf.pathFinder.PathFinder;
+import uk.ac.ed.inf.writers.DroneWriter;
 
 import java.util.ArrayList;
 import java.util.Arrays;

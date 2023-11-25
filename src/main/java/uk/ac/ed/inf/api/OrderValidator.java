@@ -1,4 +1,4 @@
-package uk.ac.ed.inf;
+package uk.ac.ed.inf.api;
 
 import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
@@ -40,9 +40,8 @@ public class OrderValidator implements uk.ac.ed.inf.ilp.interfaces.OrderValidati
     }
 
     /**
-     * Tests if the total price equals the sum of individual prices
-     * @param pizzas each providing an individual price
-     * @param totalInPence total to compare against
+     * Tests if the total price in order is accurate
+     * @param order the order object to test
      * @return true if the two numbers match, false otherwise
      */
     private boolean isTotalPriceCorrect(Order order) {

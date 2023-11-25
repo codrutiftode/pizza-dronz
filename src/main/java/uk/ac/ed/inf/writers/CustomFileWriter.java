@@ -1,4 +1,6 @@
-package uk.ac.ed.inf;
+package uk.ac.ed.inf.writers;
+
+import uk.ac.ed.inf.CustomLogger;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;

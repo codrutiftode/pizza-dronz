@@ -1,7 +1,9 @@
-package uk.ac.ed.inf;
+package uk.ac.ed.inf.writers;
 
 import com.google.gson.*;
+import uk.ac.ed.inf.CustomLogger;
 import uk.ac.ed.inf.ilp.data.Order;
+import uk.ac.ed.inf.writers.CustomFileWriter;
 
 import java.io.IOException;
 import java.lang.reflect.Type;

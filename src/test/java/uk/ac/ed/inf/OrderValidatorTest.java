@@ -1,6 +1,7 @@
 package uk.ac.ed.inf;
 
 import junit.framework.TestCase;
+import uk.ac.ed.inf.api.OrderValidator;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
 import uk.ac.ed.inf.ilp.data.*;
 

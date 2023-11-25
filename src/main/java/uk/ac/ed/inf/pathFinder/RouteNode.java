@@ -1,9 +1,7 @@
 package uk.ac.ed.inf.pathFinder;
 
-import uk.ac.ed.inf.LngLatHandler;
 import uk.ac.ed.inf.TimeKeeper;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
-import uk.ac.ed.inf.ilp.data.LngLat;
 
 import java.util.ArrayList;
 import java.util.List;
