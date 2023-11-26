@@ -8,6 +8,7 @@ public class CustomConstants {
     public static final String DRONE_FILE_PATH_FORMAT = "resultfiles/drone-%s.geojson";
     public static final String FLIGHTPATH_FILE_PATH_FORMAT = "resultfiles/flightpath-%s.json";
     public static final String DELIVERIES_FILE_PATH_FORMAT = "resultfiles/deliveries-%s.json";
+    public static final int DIRECTIONS_CIRCLE_DIVISIONS = 16;
 
     /* API Endpoints */
     public final static String ALIVE_ENDPOINT = "isAlive";

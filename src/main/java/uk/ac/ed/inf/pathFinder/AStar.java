@@ -5,10 +5,17 @@ import java.util.Collections;
 import java.util.List;
 import java.util.PriorityQueue;
 
+/**
+ * Instance of the A* search algorithm
+ * @param <PositionT> Generic type for positions in the plane used by A*
+ */
 public class AStar<PositionT> {
     private IHeuristic<PositionT> heuristic;
     private IFilter<RouteNode<PositionT>> filter;
     private INavigator<PositionT> navigator;
+
+    /** Maximum number of nodes that can be expanded from the frontier. For no limit, set to -1 **/
+    private int frontierExpansionLimit = -1;
 
     public void setNavigator(INavigator<PositionT> navigator) {
         this.navigator = navigator;
@@ -21,31 +28,69 @@ public class AStar<PositionT> {
         this.filter = f;
     }
 
+    public void setFrontierExpansionLimit(int newLimit) {
+        this.frontierExpansionLimit = newLimit;
+    }
+
+    /**
+     * Shorthand for running the full algorithm, without needing to stay within the central area
+     * @param startPoint the starting point
+     * @param endPoint the point to end on
+     * @return A list of moves to get the drone from start to end
+     */
     public List<FlightMove<PositionT>> run(PositionT startPoint, PositionT endPoint) {
         return run(startPoint, endPoint, false);
     }
 
+    /**
+     * Runs A* to find a list of moves from start to end
+     * @param startPoint the starting point
+     * @param endPoint the point to end on
+     * @param stayInCentral whether to stay inside the central area during travel
+     * @return A list of moves to get the drone from start to end
+     */
     public List<FlightMove<PositionT>> run(PositionT startPoint, PositionT endPoint, boolean stayInCentral) {
+        RouteNode<PositionT> currentNode = expandFrontier(startPoint, endPoint, stayInCentral);
+        if (currentNode == null) return null; // No path found
+        List<RouteNode<PositionT>> nodes = getNodesInOrder(currentNode);
+        return getPathFromNodes(nodes);
+    }
+
+    /**
+     * Repeatedly expands frontier until goal is reached
+     * @param startPoint the point to start from
+     * @param endPoint the point to arrive at
+     * @param stayInCentral whether the program should stay within the central area
+     * @return
+     */
+    private RouteNode<PositionT> expandFrontier(PositionT startPoint, PositionT endPoint, boolean stayInCentral) {
         PriorityQueue<RouteNode<PositionT>> frontier = new PriorityQueue<>();
-        RouteNode<PositionT> currentNode = new RouteNode<>(0, startPoint, null, -1, endPoint, heuristic, navigator);
+        RouteNode<PositionT> currentNode = getInitialNode(startPoint, endPoint);
         int counter = 0;
+
         while (!navigator.isCloseTo(currentNode.getCurrentPosition(), endPoint)) {
             List<RouteNode<PositionT>> nextMoves = filter.filterNodes(currentNode.getNextMoves(), stayInCentral);
             currentNode.stampTime();
             frontier.addAll(nextMoves);
-            currentNode = frontier.poll();
-            if (currentNode == null) { // TODO: consider this case
-                break;
-            }
-            if (counter < 90000) {
-                counter += 1;
-            }
-            else {
-                System.out.println("e");
-                break;
-            }
-        }
 
+            currentNode = frontier.poll();
+            if (currentNode == null) { // Frontier empty, no path possible
+                return null;
+            }
+
+            // Break if too many nodes have been expanded
+            counter += 1;
+            if (frontierExpansionLimit != -1 && counter >= frontierExpansionLimit) break;
+        }
+        return currentNode;
+    }
+
+    /**
+     * Order the ancestors of the current node linearly and increasingly
+     * @param currentNode the current node
+     * @return the path formed of ancestors, in order
+     */
+    private List<RouteNode<PositionT>> getNodesInOrder(RouteNode<PositionT> currentNode) {
         // Construct path from saved graph traversal nodes
         ArrayList<RouteNode<PositionT>> nodesList = new ArrayList<>();
         while (currentNode.getPreviousNode() != null) {
@@ -53,7 +98,15 @@ public class AStar<PositionT> {
             currentNode = currentNode.getPreviousNode();
         }
         Collections.reverse(nodesList);
+        return nodesList;
+    }
 
+    /**
+     * Turns a series of nodes into a series of flight moves
+     * @param nodesList the series of nodes
+     * @return the resulting list of flight moves
+     */
+    private List<FlightMove<PositionT>> getPathFromNodes(List<RouteNode<PositionT>> nodesList) {
         ArrayList<FlightMove<PositionT>> moveList = new ArrayList<>();
         for (int i = 0; i + 1< nodesList.size(); i++) {
             RouteNode<PositionT> node = nodesList.get(i);
@@ -66,5 +119,19 @@ public class AStar<PositionT> {
             moveList.add(move);
         }
         return moveList;
+    }
+
+    /**
+     * Constructs the first node to be used by A*
+     */
+    private RouteNode<PositionT> getInitialNode(PositionT startPoint, PositionT endPoint) {
+        return new RouteNode<>(0,
+                startPoint,
+                null,
+                -1,
+                endPoint,
+                heuristic,
+                navigator
+        );
     }
 }

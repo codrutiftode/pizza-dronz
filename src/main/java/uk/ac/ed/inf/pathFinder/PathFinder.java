@@ -72,19 +72,31 @@ public class PathFinder {
                 .orElse(null);
     }
 
+    /**
+     * Find the quickest path from the given point to the central area
+     * @param startPoint the point to start from
+     * @return a list of flight moves that take the drone from startPoint to inside the central area
+     */
     private List<FlightMove<LngLat>> findPathToCentralArea(LngLat startPoint) {
-        LngLat[] caVertices = centralArea.vertices();
-        List<LngLat> projections = navigator.projectPointOnSegments(startPoint, caVertices);
+        // Try projecting the start on the sides of the polygon
+        List<LngLat> projections = navigator.projectPointOnSegments(startPoint, centralArea.vertices());
         LngLat closestProjection = findClosest(startPoint, projections);
         if (closestProjection != null) {
             return findPathBetween(startPoint, closestProjection, false);
         }
 
         // If there is no projection, the closest point is a central area corner
-        LngLat closestVertex = findClosest(startPoint, Arrays.stream(caVertices).toList());
+        LngLat closestVertex = findClosest(startPoint, Arrays.stream(centralArea.vertices()).toList());
         return findPathBetween(startPoint, closestVertex, false);
     }
 
+    /**
+     * Finds path between startPoint and endPoint, while potentially staying within the central area.
+     * @param startPoint where to start
+     * @param endPoint where to end
+     * @param stayInCentral whether the drone should stay within the central area
+     * @return a list of flight moves that take the drone from start to end
+     */
     private List<FlightMove<LngLat>> findPathBetween(LngLat startPoint, LngLat endPoint, boolean stayInCentral) {
         AStar<LngLat> aStar = new AStar<>();
         Heuristic h = new Heuristic(navigator);

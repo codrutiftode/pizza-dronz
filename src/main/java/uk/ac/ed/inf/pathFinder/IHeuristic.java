@@ -1,5 +1,9 @@
 package uk.ac.ed.inf.pathFinder;
 
+/**
+ * Implements the Heuristic interface
+ * @param <PositionT> the type of position in the plane used by A*
+ */
 public interface IHeuristic<PositionT> {
-    public double heuristicCost(PositionT start, PositionT end);
+    double heuristicCost(PositionT start, PositionT end);
 }

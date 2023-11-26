@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.pathFinder;
 
+import uk.ac.ed.inf.CustomConstants;
 import uk.ac.ed.inf.TimeKeeper;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
 
@@ -33,13 +34,21 @@ public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
         this.heuristic = heuristic;
     }
 
-    public List<RouteNode<PositionT>> getNextMoves() {
-        List<RouteNode<PositionT>> nextMoves = new ArrayList<>();
+    /**
+     * Get all possible next moves from the current node
+     * @return a list of all possible nodes to visit
+     */
+    public List<RouteNode<PositionT>> getNextMoves() { // TODO: add closed set. Might mean you don't need the reverse move rule
         final double costOfOneMove = SystemConstants.DRONE_MOVE_DISTANCE;
-        int circleDivisions = 16;
+        int circleDivisions = CustomConstants.DIRECTIONS_CIRCLE_DIVISIONS;
         double angleIncrement = 360.0 / circleDivisions;
+        List<RouteNode<PositionT>> nextMoves = new ArrayList<>();
+
         for (int i = 0; i < circleDivisions; i++) {
-            if ((i + 8) % 16 == previousMove) continue;
+            // Should not be able to go back via the same move that was just played
+            if (getOpposingMove(i, circleDivisions) == previousMove) continue;
+
+            // Create node for next move
             PositionT nextPosition = navigator.nextPosition(currentPosition, Math.toRadians(i * angleIncrement));
             RouteNode<PositionT> newNode = new RouteNode<>(
                     costSoFar + costOfOneMove,
@@ -53,6 +62,10 @@ public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
             nextMoves.add(newNode);
         }
         return nextMoves;
+    }
+
+    private int getOpposingMove(int moveIndex, int circleDivisions) {
+        return (moveIndex + (circleDivisions / 2)) % circleDivisions;
     }
 
     public int getPreviousMove() {
@@ -75,10 +88,17 @@ public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
         return previousNode;
     }
 
+    /**
+     * Records current time of executing this method
+     */
     public void stampTime() {
         this.timestamp = TimeKeeper.getTimeKeeper().getTime();
     }
 
+    /**
+     * Computes the cost of the current node
+     * @return The current node's cost
+     */
     public double computeCost() {
         double h = heuristic.heuristicCost(getCurrentPosition(), endPoint);
         double g = getCostSoFar();

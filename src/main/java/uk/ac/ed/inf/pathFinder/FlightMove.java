@@ -1,7 +1,5 @@
 package uk.ac.ed.inf.pathFinder;
 
-import uk.ac.ed.inf.ilp.data.LngLat;
-
 public class FlightMove<PositionT> {
     private final PositionT from;
     private final PositionT to;
