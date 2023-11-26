@@ -33,16 +33,6 @@ public class AStar<PositionT> {
     }
 
     /**
-     * Shorthand for running the full algorithm, without needing to stay within the central area
-     * @param startPoint the starting point
-     * @param endPoint the point to end on
-     * @return A list of moves to get the drone from start to end
-     */
-    public List<FlightMove<PositionT>> run(PositionT startPoint, PositionT endPoint) {
-        return run(startPoint, endPoint, false);
-    }
-
-    /**
      * Runs A* to find a list of moves from start to end
      * @param startPoint the starting point
      * @param endPoint the point to end on
@@ -61,12 +51,12 @@ public class AStar<PositionT> {
      * @param startPoint the point to start from
      * @param endPoint the point to arrive at
      * @param stayInCentral whether the program should stay within the central area
-     * @return
+     * @return the final node after goal is reached
      */
     private RouteNode<PositionT> expandFrontier(PositionT startPoint, PositionT endPoint, boolean stayInCentral) {
         PriorityQueue<RouteNode<PositionT>> frontier = new PriorityQueue<>();
         RouteNode<PositionT> currentNode = getInitialNode(startPoint, endPoint);
-        int counter = 0;
+        int noExpandedNodes = 0;
 
         while (!navigator.isCloseTo(currentNode.getCurrentPosition(), endPoint)) {
             List<RouteNode<PositionT>> nextMoves = filter.filterNodes(currentNode.getNextMoves(), stayInCentral);
@@ -79,8 +69,8 @@ public class AStar<PositionT> {
             }
 
             // Break if too many nodes have been expanded
-            counter += 1;
-            if (frontierExpansionLimit != -1 && counter >= frontierExpansionLimit) break;
+            noExpandedNodes += 1;
+            if (frontierExpansionLimit != -1 && noExpandedNodes >= frontierExpansionLimit) break;
         }
         return currentNode;
     }
@@ -91,7 +81,6 @@ public class AStar<PositionT> {
      * @return the path formed of ancestors, in order
      */
     private List<RouteNode<PositionT>> getNodesInOrder(RouteNode<PositionT> currentNode) {
-        // Construct path from saved graph traversal nodes
         ArrayList<RouteNode<PositionT>> nodesList = new ArrayList<>();
         while (currentNode.getPreviousNode() != null) {
             nodesList.add(currentNode);

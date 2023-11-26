@@ -8,15 +8,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
-    protected double costSoFar;
-    protected PositionT currentPosition;
-    protected RouteNode<PositionT> previousNode;
-    protected int previousMove;
+    protected final double costSoFar;
+    protected final PositionT currentPosition;
+    protected final RouteNode<PositionT> previousNode;
+    protected final int previousMove;
     private long timestamp = -1;
-    protected PositionT endPoint;
-    protected IHeuristic<PositionT> heuristic;
+    protected final PositionT endPoint;
+    protected final IHeuristic<PositionT> heuristic;
 
-    private INavigator<PositionT> navigator;
+    private final INavigator<PositionT> navigator;
 
     public RouteNode(double costSoFar,
                      PositionT currentPosition,

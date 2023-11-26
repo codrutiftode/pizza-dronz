@@ -27,7 +27,7 @@ public class PathFinder {
         }
 
         List<FlightMove<LngLat>> fullPath;
-        List<FlightMove<LngLat>> pathToRestaurant = findPathBetween(this.dropOffPoint, targetLocation, false);
+        List<FlightMove<LngLat>> pathToRestaurant = findPathBetween(start, targetLocation, false);
         FlightMove<LngLat> targetHoverMove = getHoverMove(getLastPosition(pathToRestaurant));
         fullPath = new ArrayList<>(pathToRestaurant);
         fullPath.add(targetHoverMove);

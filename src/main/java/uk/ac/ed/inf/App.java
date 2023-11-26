@@ -34,6 +34,7 @@ public class App
 
         // Get data from API
         APIResult apiResult = getDataFromAPI();
+        if (!apiResult.getRequestSuccessful()) return;
         Restaurant[] restaurants = apiResult.getRestaurants();
         Order[] orders = apiResult.getOrders();
         NamedRegion[] noFlyZones = apiResult.getNoFlyZones();
@@ -151,7 +152,7 @@ public class App
         String flightpathFile = String.format(CustomConstants.FLIGHTPATH_FILE_PATH_FORMAT, targetDate);
         String droneFile = String.format(CustomConstants.DRONE_FILE_PATH_FORMAT, targetDate);
 
-        new DeliveriesWriter(deliveriesFile).writeDeliveries(ordersWithValidation);
+        new DeliveriesWriter(deliveriesFile).writeDeliveries(ordersWithValidation); // TODO: check what needs to be written here
         new FlightpathWriter(flightpathFile).writeFlightpath(paths);
         new DroneWriter(droneFile).writePaths(paths);
     }

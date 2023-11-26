@@ -97,7 +97,7 @@ public class GeojsonTest extends TestCase {
                     .filter(order -> order.getOrderValidationCode() == OrderValidationCode.NO_ERROR)
                     .toList();
 
-            logger.log("Date: " + date.toString() + " <-> valid orders: " + validOrders.size());
+            logger.log("Date: " + date + " <-> valid orders: " + validOrders.size());
             i++;
         }
     }

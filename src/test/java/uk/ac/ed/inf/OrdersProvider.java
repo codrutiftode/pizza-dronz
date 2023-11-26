@@ -10,10 +10,10 @@ import java.time.LocalDate;
 
 public class OrdersProvider {
 
-    private Restaurant[] restaurants;
-    private Order[] orders;
-    private NamedRegion[] noFlyZones;
-    private NamedRegion centralArea;
+    private final Restaurant[] restaurants;
+    private final Order[] orders;
+    private final NamedRegion[] noFlyZones;
+    private final NamedRegion centralArea;
 
     public OrdersProvider() {
         DayOfWeek[] daysOpen1 = new DayOfWeek[]{

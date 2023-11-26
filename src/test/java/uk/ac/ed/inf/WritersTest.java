@@ -20,7 +20,6 @@ import java.util.List;
 
 public class WritersTest extends TestCase {
     public void testDeliveriesWriter() {
-        CustomLogger logger = CustomLogger.getLogger();
         String apiUrl = "https://ilp-rest.azurewebsites.net/";
         String targetDate = "2023-11-15";
         OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
@@ -38,7 +37,6 @@ public class WritersTest extends TestCase {
     }
 
     public void testFlightpathWriter() {
-        CustomLogger logger = CustomLogger.getLogger();
         String apiUrl = "https://ilp-rest.azurewebsites.net/";
         String targetDate = "2023-11-15";
         OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
