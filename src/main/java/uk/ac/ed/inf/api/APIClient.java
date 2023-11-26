@@ -48,7 +48,7 @@ public class APIClient {
     }
 
     private boolean isSuccessCode(int code) {
-        return code / 100 != 2;
+        return code / 100 == 2;
     }
 
     protected String createEndpoint(String... endpointParts) {
