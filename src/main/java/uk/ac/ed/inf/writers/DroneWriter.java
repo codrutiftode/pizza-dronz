@@ -10,6 +10,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Writes the GeoJSON file containing the drone path
+ */
 public class DroneWriter extends CustomFileWriter {
     public DroneWriter(String filepath) {
         super(filepath);
@@ -53,6 +56,11 @@ public class DroneWriter extends CustomFileWriter {
         return featureCollection;
     }
 
+    /**
+     * Turn a list of flight moves to a list of positions
+     * @param paths the given flight moves
+     * @return the list of positions the flightpath will go through
+     */
     private List<LngLat> compileDronePath(List<List<FlightMove<LngLat>>> paths) {
         List<LngLat> dronePath = new ArrayList<>();
         for (List<FlightMove<LngLat>> path : paths) {

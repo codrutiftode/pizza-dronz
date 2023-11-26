@@ -4,13 +4,15 @@ import com.google.gson.*;
 import uk.ac.ed.inf.CustomLogger;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.pathFinder.FlightMove;
-import uk.ac.ed.inf.writers.CustomFileWriter;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Writes the JSON file containing the flightpath
+ */
 public class FlightpathWriter extends CustomFileWriter {
     public FlightpathWriter(String flightpath) {
         super(flightpath);
@@ -27,6 +29,12 @@ public class FlightpathWriter extends CustomFileWriter {
         }
     }
 
+    /**
+     * Helper function for flattening a list of lists
+     * @param listOfLists the given list of lists
+     * @return the flattened list
+     * @param <T> makes it work for any type in the list
+     */
     private <T> List<T> flatten(List<List<T>> listOfLists) {
         return listOfLists.stream().flatMap(List::stream).collect(Collectors.toList());
     }

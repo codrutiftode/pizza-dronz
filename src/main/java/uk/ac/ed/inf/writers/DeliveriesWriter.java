@@ -3,12 +3,14 @@ package uk.ac.ed.inf.writers;
 import com.google.gson.*;
 import uk.ac.ed.inf.CustomLogger;
 import uk.ac.ed.inf.ilp.data.Order;
-import uk.ac.ed.inf.writers.CustomFileWriter;
 
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
 
+/**
+ * Writes the JSON file containing all deliveries
+ */
 public class DeliveriesWriter extends CustomFileWriter {
     public DeliveriesWriter(String filepath) {
         super(filepath);
@@ -24,7 +26,7 @@ public class DeliveriesWriter extends CustomFileWriter {
         }
     }
 
-    private class DeliverySerialiser implements JsonSerializer<Order> {
+    private static class DeliverySerialiser implements JsonSerializer<Order> {
         @Override
         public JsonElement serialize(Order order, Type type, JsonSerializationContext jsonSerializationContext) {
             JsonObject json = new JsonObject();
