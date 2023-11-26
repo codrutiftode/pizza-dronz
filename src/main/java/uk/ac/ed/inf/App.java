@@ -1,5 +1,6 @@
 package uk.ac.ed.inf;
 
+import uk.ac.ed.inf.api.APIResult;
 import uk.ac.ed.inf.api.OrderValidator;
 import uk.ac.ed.inf.api.OrdersAPIClient;
 import uk.ac.ed.inf.api.RestaurantFinder;
@@ -19,79 +20,139 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * Hello world!
- *
+ * The main application
  */
 public class App 
 {
-    public static void main( String[] args )
+    private static String targetDate;
+    private static String apiUrl;
+
+    public static void main(String[] args)
     {
-        CustomLogger logger = CustomLogger.getLogger();
-        logger.log("App starting...");
-
-        // Read CLI arguments
-        if (args.length != 2) {
-            logger.error("Usage: <jar-file> <target-date> <API-URL>.");
-            return;
-        }
-        String targetDate = args[0];
-        String apiUrl = args[1];
-
-        // Initialise API connection
-        OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
-        boolean isAlive = apiClient.checkAliveAPI();
-        if (!isAlive) {
-            logger.error("The API at " + apiUrl + " is not alive. Abort.");
-            return;
-        }
+        CustomLogger.getLogger().log("App starting...");
+        if (!parseCLIArguments(args)) return;
 
         // Get data from API
-        Restaurant[] restaurants = apiClient.getRestaurants();
-        Order[] orders = apiClient.getOrders(targetDate);
-        NamedRegion[] noFlyZones = apiClient.getNoFlyZones();
-        NamedRegion centralArea = apiClient.getCentralArea();
-        if (restaurants == null || orders == null || noFlyZones == null || centralArea == null) {
-            logger.error("There was an error while parsing API responses. Abort.");
-            return;
-        }
+        APIResult apiResult = getDataFromAPI();
+        Restaurant[] restaurants = apiResult.getRestaurants();
+        Order[] orders = apiResult.getOrders();
+        NamedRegion[] noFlyZones = apiResult.getNoFlyZones();
+        NamedRegion centralArea = apiResult.getCentralArea();
 
         // Validate orders
-        OrderValidator orderValidator = new OrderValidator();
-        List<Order> validOrders = Arrays.stream(orders)
-                .map(order -> orderValidator.validateOrder(order, restaurants))
+        List<Order> ordersWithValidation = validateOrders(orders, restaurants);
+        List<Order> validOrders = ordersWithValidation.stream()
                 .filter(order -> order.getOrderValidationCode() == OrderValidationCode.NO_ERROR)
                 .toList();
 
         // Find paths
+        List<List<FlightMove<LngLat>>> paths = computePaths(validOrders, restaurants, noFlyZones, centralArea);
+
+        // Output to files
+        writeToFiles(ordersWithValidation, paths);
+        CustomLogger.getLogger().log("App finished.");
+    }
+
+    /**
+     * Parses the CLI arguments
+     * @param args CLI arguments
+     * @return true if CLI arguments were parsed successfully, false otherwise
+     */
+    private static boolean parseCLIArguments(String[] args) {
+        if (args.length != 2) {
+            CustomLogger.getLogger().error("Usage: <jar-file> <target-date> <API-URL>.");
+            return false;
+        }
+        targetDate = args[0];
+        apiUrl = args[1];
+        return true;
+    }
+
+    /**
+     * Requests and validates data from the API
+     * @return an API result that is either unsuccessful, or contains all required data
+     */
+    private static APIResult getDataFromAPI() {
+        // Initialise API connection
+        OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
+        boolean isAlive = apiClient.checkAliveAPI();
+        if (!isAlive) {
+            CustomLogger.getLogger().error("The API at " + apiUrl + " is not alive. Abort.");
+            return new APIResult(false);
+        }
+
+        // Check all data was parsed correctly
+        if (apiClient.getRestaurants() == null ||
+                apiClient.getOrders(targetDate) == null ||
+                apiClient.getCentralArea() == null ||
+                apiClient.getNoFlyZones() == null) {
+            CustomLogger.getLogger().error("There was an error while parsing API responses. Abort.");
+            return new APIResult(false);
+        }
+
+        // Create normal api result
+        return new APIResult(
+                apiClient.getOrders(targetDate),
+                apiClient.getRestaurants(),
+                apiClient.getNoFlyZones(),
+                apiClient.getCentralArea()
+        );
+    }
+
+    /**
+     * Adds validation codes for every order
+     * @param orders raw list of orders
+     * @param restaurants the restaurants
+     * @return the same list of orders, but with order validation codes
+     */
+    private static List<Order> validateOrders(Order[] orders, Restaurant[] restaurants) {
+        OrderValidator orderValidator = new OrderValidator();
+        return Arrays.stream(orders)
+                .map(order -> orderValidator.validateOrder(order, restaurants))
+                .toList();
+    }
+
+    /**
+     * Tries to compute a path for every valid order
+     * @param validOrders a list of valid orders
+     * @param restaurants a list of restaurants
+     * @param noFlyZones no-fly zones
+     * @param centralArea central area
+     * @return a list of paths made of flight moves
+     */
+    private static List<List<FlightMove<LngLat>>> computePaths(List<Order> validOrders,
+                                                               Restaurant[] restaurants,
+                                                               NamedRegion[] noFlyZones,
+                                                               NamedRegion centralArea) {
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         List<List<FlightMove<LngLat>>> paths = new ArrayList<>();
         LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
+
         for (Order order : validOrders) {
-            logger.log("Path found");
-            List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+            LngLat targetLocation = restaurantFinder.getRestaurantForOrder(order).location();
+            List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, targetLocation);
             if (path != null) {
                 path.forEach(move -> move.assignToOrder(order.getOrderNo()));
                 paths.add(path);
                 lastDropOff = path.get(path.size() - 1).getTo();
             }
         }
+        return paths;
+    }
 
-        // Output to files
-        DeliveriesWriter deliveriesWriter = new DeliveriesWriter(
-                String.format(CustomConstants.DELIVERIES_FILE_PATH_FORMAT, targetDate)
-        );
-        deliveriesWriter.writeDeliveries(Arrays.stream(orders).toList());
+    /**
+     * Write output to JSON and GeoJSON files
+     * @param ordersWithValidation orders together with validation codes
+     * @param paths list of paths for all valid orders
+     */
+    private static void writeToFiles(List<Order> ordersWithValidation, List<List<FlightMove<LngLat>>> paths) {
+        String deliveriesFile = String.format(CustomConstants.DELIVERIES_FILE_PATH_FORMAT, targetDate);
+        String flightpathFile = String.format(CustomConstants.FLIGHTPATH_FILE_PATH_FORMAT, targetDate);
+        String droneFile = String.format(CustomConstants.DRONE_FILE_PATH_FORMAT, targetDate);
 
-        FlightpathWriter flightpathWriter = new FlightpathWriter(
-                String.format(CustomConstants.FLIGHTPATH_FILE_PATH_FORMAT, targetDate)
-        );
-        flightpathWriter.writeFlightpath(paths);
-
-        DroneWriter droneWriter = new DroneWriter(
-                String.format(CustomConstants.DRONE_FILE_PATH_FORMAT, targetDate)
-        );
-        droneWriter.writePaths(paths);
-        logger.log("App finished.");
+        new DeliveriesWriter(deliveriesFile).writeDeliveries(ordersWithValidation);
+        new FlightpathWriter(flightpathFile).writeFlightpath(paths);
+        new DroneWriter(droneFile).writePaths(paths);
     }
 }
