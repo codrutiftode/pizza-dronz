@@ -48,17 +48,14 @@ public class PointInPoly extends CoordinateCalculator {
      */
     private boolean isOnSegment(LngLat C, LngLat A, LngLat B) {
         if (doublesEqual(y(A), y(B))) { // If segment is horizontal
-            return doublesEqual(y(C), y(A))
-                    && isInBetween(x(A), x(C), x(B));
+            return doublesEqual(y(C), y(A)) && isInBetween(x(A), x(C), x(B));
         }
         else if (doublesEqual(x(A), x(B))) { // If segment is vertical
-            return doublesEqual(x(C), x(A))
-                    && isInBetween(y(A), y(C), y(B));
+            return doublesEqual(x(C), x(A)) && isInBetween(y(A), y(C), y(B));
         }
         else { // If segment is neither horizontal nor vertical
             double projectedLng = projectOnSegment(y(C), A, B);
-            return doublesEqual(x(C), projectedLng)
-                    && isInBetween(x(A), projectedLng, x(B));
+            return doublesEqual(x(C), projectedLng) && isInBetween(x(A), projectedLng, x(B));
         }
     }
 
@@ -82,18 +79,31 @@ public class PointInPoly extends CoordinateCalculator {
         }
     }
 
+    /**
+     * Translates a point to a new origin
+     * @param P the original point
+     * @param origin the point that should be the new origin for P
+     * @return the translated point
+     */
     private LngLat translateToOrigin(LngLat P, LngLat origin) {
         return new LngLat(x(P) - x(origin), y(P) - y(origin));
     }
 
+    /**
+     * Reverses the operation of translateToOrigin()
+     * @param P a point
+     * @param origin the new origin
+     * @return the translated point
+     */
     private LngLat translateFromOrigin(LngLat P, LngLat origin) {
         return new LngLat(x(P) + x(origin), y(P) + y(origin));
     }
 
     /**
-     * Rotates a vertex around the origin (0, 0), using the standard rotation matrix
+     * Rotates a vertex around the given origin, using the standard rotation matrix
      * @param P the vertex to rotate
      * @param angle the angle between the old position vector and new position vector
+     * @param origin the origin to rotate the vertex around
      * @return the new rotated vertex
      */
     private LngLat rotateVertex(LngLat P, double angle, LngLat origin) {
@@ -102,20 +112,26 @@ public class PointInPoly extends CoordinateCalculator {
             x(translatedP) * Math.cos(angle) - y(translatedP) * Math.sin(angle),
             x(translatedP) * Math.sin(angle) + y(translatedP) * Math.cos(angle)
         );
-        LngLat finalP = translateFromOrigin(rotated, origin);
-        return finalP;
+        return translateFromOrigin(rotated, origin);
     }
 
     /**
-     * Rotates a plane of multiple vertices around the origin (0, 0)
+     * Rotates a plane of multiple vertices around the given origin
      * @param vertices the vertices making up the plane
      * @param angle the angle of rotation
+     * @param origin the origin to rotate the vertices around
      * @return an array of rotated vertices
      */
     private LngLat[] rotatePlane(LngLat[] vertices, double angle, LngLat origin) {
         return Arrays.stream(vertices).map((LngLat P) -> rotateVertex(P, angle, origin)).toArray(LngLat[]::new);
     }
 
+    /**
+     * Checks if any of the vertices has the same Y coordinate as the point
+     * @param vertices an array of vertices
+     * @param point a given point
+     * @return true if any vertex has the same Y as point, and false otherwise
+     */
     private boolean someVertexSameY(LngLat[] vertices, LngLat point) {
         for (LngLat vertex : vertices) {
             if (doublesEqual(y(vertex), y(point))) {
@@ -125,10 +141,15 @@ public class PointInPoly extends CoordinateCalculator {
         return false;
     }
 
+    /**
+     * Checks if the point class member is inside the polygon class member
+     * @return true if yes, false otherwise
+     */
     public boolean isInside() {
-        // If y coordinate matches one or more vertices, rotate the plane by small degree
         LngLat[] vertices = polygon.vertices();
         LngLat currentPosition = point;
+
+        // If y coordinate matches one or more vertices, rotate the plane by a small degree until it does not
         while (someVertexSameY(vertices, currentPosition)) {
             LngLat origin = getCenterOfPolygon(vertices);
             vertices = rotatePlane(vertices, Math.toRadians(2), origin);
@@ -138,7 +159,7 @@ public class PointInPoly extends CoordinateCalculator {
         // Count intersections between a ray shooting to the right and each segment in 'region'
         int intersectionCount = 0;
         for (int i = 0; i < vertices.length; i++) {
-            LngLat nextVertex = vertices[(i + 1) % vertices.length]; // Loop back to start
+            LngLat nextVertex = vertices[(i + 1) % vertices.length]; // Loop back to start if needed
             if (isOnSegment(currentPosition, vertices[i], nextVertex)) {
                 return true;
             }
