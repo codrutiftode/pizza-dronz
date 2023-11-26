@@ -5,6 +5,10 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.logging.*;
 
+/**
+ * Logs information and errors to the console, together with the system time.
+ * Used for debugging and error logging.
+ */
 public class CustomLogger {
     private static CustomLogger logger = null;
     private final Logger internalLogger;
