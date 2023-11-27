@@ -8,8 +8,10 @@ import uk.ac.ed.inf.ilp.data.*;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 
+/**
+ * Provides mock test data
+ */
 public class OrdersProvider {
-
     private final Restaurant[] restaurants;
     private final Order[] orders;
     private final NamedRegion[] noFlyZones;

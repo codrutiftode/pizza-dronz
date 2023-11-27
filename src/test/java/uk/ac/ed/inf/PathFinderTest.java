@@ -40,16 +40,8 @@ public class PathFinderTest extends TestCase {
         System.out.println(Arrays.toString(path.toArray()));
     }
 
-    public void testOnePath() {
-        CustomLogger logger = CustomLogger.getLogger();
-        String apiUrl = "https://ilp-rest.azurewebsites.net/";
-        String targetDate = "2023-11-15";
-        OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
-        Restaurant[] restaurants = apiClient.getRestaurants();
-        Order[] orders = apiClient.getOrders(targetDate);
+    public void testCA1() {
         NamedRegion centralArea = new NamedRegion("central", new LngLat[]{
-//                new LngLat(-3.1925, 55.9436),
-//                new LngLat(-3.1925, 55.9426),
                 new LngLat(-3.1937, 55.9437),
                 new LngLat(	-3.1938, 55.9426),
                 new LngLat(-3.1860, 55.9426),
@@ -57,6 +49,28 @@ public class PathFinderTest extends TestCase {
                 new LngLat(	-3.1876, 55.9453),
                 new LngLat(-3.1876, 55.9439)
         });
+        testOnePathWithCentralArea(centralArea);
+    }
+
+    public void testCA2() {
+        NamedRegion centralArea = new NamedRegion("central", new LngLat[]{
+                new LngLat(-3.1925, 55.9436),
+                new LngLat(-3.1925, 55.9426),
+                new LngLat(-3.1860, 55.9426),
+                new LngLat(-3.1860, 55.9451),
+                new LngLat(	-3.1876, 55.9453),
+                new LngLat(-3.1876, 55.9439)
+        });
+        testOnePathWithCentralArea(centralArea);
+    }
+
+    private void testOnePathWithCentralArea(NamedRegion centralArea) {
+        CustomLogger logger = CustomLogger.getLogger();
+        String apiUrl = "https://ilp-rest.azurewebsites.net/";
+        String targetDate = "2023-11-15";
+        OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
+        Restaurant[] restaurants = apiClient.getRestaurants();
+        Order[] orders = apiClient.getOrders(targetDate);
         NamedRegion[] noFlyZones = apiClient.getNoFlyZones();
 
         OrderValidator orderValidator = new OrderValidator();

@@ -102,7 +102,7 @@ public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
     public double computeCost() {
         double h = heuristic.heuristicCost(getCurrentPosition(), endPoint);
         double g = getCostSoFar();
-        return h * 1.05 + g;
+        return h * 3 + g;
     }
 
     @Override

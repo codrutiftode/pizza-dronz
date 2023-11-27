@@ -30,15 +30,6 @@ public class PointInPoly extends CoordinateCalculator {
         return (lat - y(A) + slope * x(A)) / slope; // From equation of a straight line
     }
 
-    private LngLat getCenterOfPolygon(LngLat[] vertices) {
-        double centerX = 0, centerY = 0;
-        for (LngLat v : vertices) {
-            centerX += x(v);
-            centerY += y(v);
-        }
-        return new LngLat(centerX / vertices.length, centerY / vertices.length);
-    }
-
     /**
      * Checks if a given position lands on a given segment
      * @param C the position to check

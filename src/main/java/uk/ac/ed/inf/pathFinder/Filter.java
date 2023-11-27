@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.pathFinder;
 
+import uk.ac.ed.inf.coordinates.LngLatHandler;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 
@@ -56,8 +57,8 @@ public class Filter implements IFilter<RouteNode<LngLat>> {
         if (stayInCentral) noFlyRegions.add(centralArea);
 
         for (NamedRegion region : noFlyRegions) {
-            for (int i = 0; i + 1 < region.vertices().length; i++) {
-                int j = i + 1;
+            for (int i = 0; i < region.vertices().length; i++) {
+                int j = (i + 1) % region.vertices().length;
                 boolean intersect = segmentsIntersect(oldPosition,
                         newPosition,
                         region.vertices()[i],

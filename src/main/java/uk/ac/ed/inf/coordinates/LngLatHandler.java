@@ -1,5 +1,6 @@
 package uk.ac.ed.inf.coordinates;
 
+import uk.ac.ed.inf.CustomConstants;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
@@ -95,5 +96,19 @@ public class LngLatHandler extends CoordinateCalculator implements uk.ac.ed.inf.
             }
         }
         return projections;
+    }
+
+    /**
+     * Takes one move in the closest valid direction that approximates moving in the direction of the "towards" point
+     * @param start The starting point
+     * @param towards The point to try to move towards
+     * @return the position after taking the move
+     */
+    public LngLat takeOneMove(LngLat start, LngLat towards) {
+        double angle = Math.toDegrees(Math.atan2(towards.lat() - start.lat(), towards.lng() - start.lng()));
+        double positiveAngle = angle > 0 ? angle : 360 - angle;
+        double angleIncrement = 360.0 / CustomConstants.DIRECTIONS_CIRCLE_DIVISIONS;
+        double closestAngle = Math.ceil(positiveAngle / angleIncrement) * angleIncrement; // The closest valid angle based on drone restrictions
+        return nextPosition(start, Math.toRadians(closestAngle));
     }
 }

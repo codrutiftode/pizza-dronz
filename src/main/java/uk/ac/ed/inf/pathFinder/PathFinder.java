@@ -35,7 +35,7 @@ public class PathFinder {
         LngLat droneAtTarget = targetHoverMove.getTo();
         if (!navigator.isInCentralArea(droneAtTarget, centralArea)) {
             List<FlightMove<LngLat>> pathToCentralArea = findPathToCentralArea(droneAtTarget);
-            List<FlightMove<LngLat>> pathToDropOff = findPathBetween(getLastPosition(pathToCentralArea), dropOffPoint, false); // TODO: this needs to be true
+            List<FlightMove<LngLat>> pathToDropOff = findPathBetween(getLastPosition(pathToCentralArea), dropOffPoint, true);
             FlightMove<LngLat> dropOffHoverMove = getHoverMove(getLastPosition(pathToDropOff));
             fullPath.addAll(pathToCentralArea);
             fullPath.addAll(pathToDropOff);
@@ -73,21 +73,30 @@ public class PathFinder {
     }
 
     /**
+     * Finds the closest entrance to central area, by finding the closest either projection
+     * on a side of central area or central area corner
+     * @param startPoint the start point
+     * @return the closest entrance
+     */
+    private LngLat findCentralAreaEntrance(LngLat startPoint) {
+        List<LngLat> projections = navigator.projectPointOnSegments(startPoint, centralArea.vertices());
+        List<LngLat> possibleEntrances = new ArrayList<>(projections);
+        possibleEntrances.addAll(Arrays.stream(centralArea.vertices()).toList());
+        return findClosest(startPoint, possibleEntrances);
+    }
+
+    /**
      * Find the quickest path from the given point to the central area
      * @param startPoint the point to start from
      * @return a list of flight moves that take the drone from startPoint to inside the central area
      */
     private List<FlightMove<LngLat>> findPathToCentralArea(LngLat startPoint) {
-        // Try projecting the start on the sides of the polygon
-        List<LngLat> projections = navigator.projectPointOnSegments(startPoint, centralArea.vertices());
-        LngLat closestProjection = findClosest(startPoint, projections);
-        if (closestProjection != null) {
-            return findPathBetween(startPoint, closestProjection, false);
-        }
+        LngLat entrance = findCentralAreaEntrance(startPoint);
 
-        // If there is no projection, the closest point is a central area corner
-        LngLat closestVertex = findClosest(startPoint, Arrays.stream(centralArea.vertices()).toList());
-        return findPathBetween(startPoint, closestVertex, false);
+        // Take two moves towards the center of central area to ensure arriving inside the central area
+        LngLat center = navigator.getCenterOfPolygon(centralArea.vertices());
+        LngLat insideCentralArea = navigator.takeOneMove(navigator.takeOneMove(entrance, center), center);
+        return findPathBetween(startPoint, insideCentralArea, false);
     }
 
     /**
@@ -104,6 +113,7 @@ public class PathFinder {
         aStar.setHeuristic(h);
         aStar.setFilter(f);
         aStar.setNavigator(navigator);
+        aStar.setFrontierExpansionLimit(40000); // TODO: think about this
         return aStar.run(startPoint, endPoint, stayInCentral);
     }
 }

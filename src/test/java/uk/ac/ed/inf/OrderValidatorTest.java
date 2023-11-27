@@ -3,6 +3,7 @@ package uk.ac.ed.inf;
 import junit.framework.TestCase;
 import uk.ac.ed.inf.api.OrderValidator;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
+import uk.ac.ed.inf.ilp.constant.SystemConstants;
 import uk.ac.ed.inf.ilp.data.*;
 
 import java.time.DayOfWeek;
@@ -49,20 +50,20 @@ public class OrderValidatorTest extends TestCase {
         cardInfo.setCreditCardExpiry(newExpiry);
         order.setCreditCardInformation(cardInfo);
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.EXPIRY_DATE_INVALID);
+        assertEquals(OrderValidationCode.EXPIRY_DATE_INVALID, validatedOrder.getOrderValidationCode());
     }
 
     public void testTotalPriceCorrect() {
         OrderValidator validator = new OrderValidator();
         Order order = new Order();
-        order.setPriceTotalInPence(300);
+        order.setPriceTotalInPence(300 + SystemConstants.ORDER_CHARGE_IN_PENCE);
         order.setPizzasInOrder(new Pizza[]{
                 new Pizza("Margherita", 100),
                 new Pizza("Quatro Staggioni", 200)
         });
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertNotSame(validatedOrder.getOrderValidationCode(), OrderValidationCode.TOTAL_INCORRECT);
+        assertNotSame(OrderValidationCode.TOTAL_INCORRECT, validatedOrder.getOrderValidationCode());
     }
 
     public void testTotalPriceIncorrect() {
@@ -75,26 +76,26 @@ public class OrderValidatorTest extends TestCase {
         });
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.TOTAL_INCORRECT);
+        assertEquals(OrderValidationCode.TOTAL_INCORRECT, validatedOrder.getOrderValidationCode());
     }
 
     public void testPizzaNotDefined() {
         OrderValidator validator = new OrderValidator();
         Order order = new Order();
-        order.setPriceTotalInPence(300);
+        order.setPriceTotalInPence(300 + SystemConstants.ORDER_CHARGE_IN_PENCE);
         order.setPizzasInOrder(new Pizza[]{
                 new Pizza("Margherita", 100),
                 new Pizza("Quatro Staggionii", 200)
         });
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.PIZZA_NOT_DEFINED);
+        assertEquals(OrderValidationCode.PIZZA_NOT_DEFINED, validatedOrder.getOrderValidationCode());
     }
 
     public void testPizzaMaxCountExceeded() {
         OrderValidator validator = new OrderValidator();
         Order order = new Order();
-        order.setPriceTotalInPence(500);
+        order.setPriceTotalInPence(500 + SystemConstants.ORDER_CHARGE_IN_PENCE);
         order.setPizzasInOrder(new Pizza[]{
                 new Pizza("Margherita", 100),
                 new Pizza("Margherita", 100),
@@ -104,13 +105,13 @@ public class OrderValidatorTest extends TestCase {
         });
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.MAX_PIZZA_COUNT_EXCEEDED);
+        assertEquals( OrderValidationCode.MAX_PIZZA_COUNT_EXCEEDED, validatedOrder.getOrderValidationCode());
     }
 
     public void testPizzaMultipleRestaurants() {
         OrderValidator validator = new OrderValidator();
         Order order = new Order();
-        order.setPriceTotalInPence(400);
+        order.setPriceTotalInPence(400 + SystemConstants.ORDER_CHARGE_IN_PENCE);
         order.setPizzasInOrder(new Pizza[]{
                 new Pizza("Margherita", 100),
                 new Pizza("Pineapple", 200),
@@ -118,13 +119,13 @@ public class OrderValidatorTest extends TestCase {
         });
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS);
+        assertEquals(OrderValidationCode.PIZZA_FROM_MULTIPLE_RESTAURANTS, validatedOrder.getOrderValidationCode());
     }
 
     public void testRestaurantClosed() {
         OrderValidator validator = new OrderValidator();
         Order order = new Order();
-        order.setPriceTotalInPence(450);
+        order.setPriceTotalInPence(450 + SystemConstants.ORDER_CHARGE_IN_PENCE);
         order.setPizzasInOrder(new Pizza[]{
                 new Pizza("Quatro Formaggi", 300),
                 new Pizza("Pineapple", 150),
@@ -132,6 +133,6 @@ public class OrderValidatorTest extends TestCase {
         order.setOrderDate(LocalDate.now());
         order.setCreditCardInformation(getDemoCreditCard());
         Order validatedOrder = validator.validateOrder(order, getDemoRestaurants());
-        assertEquals(validatedOrder.getOrderValidationCode(), OrderValidationCode.RESTAURANT_CLOSED);
+        assertEquals(OrderValidationCode.RESTAURANT_CLOSED, validatedOrder.getOrderValidationCode());
     }
 }

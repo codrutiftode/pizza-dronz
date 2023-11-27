@@ -55,4 +55,13 @@ public class CoordinateCalculator {
     protected boolean doublesEqual(double a, double b) {
         return roundDouble(a) == roundDouble(b);
     }
+
+    public LngLat getCenterOfPolygon(LngLat[] vertices) {
+        double centerX = 0, centerY = 0;
+        for (LngLat v : vertices) {
+            centerX += x(v);
+            centerY += y(v);
+        }
+        return new LngLat(centerX / vertices.length, centerY / vertices.length);
+    }
 }
