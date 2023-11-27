@@ -52,7 +52,7 @@ public class CoordinateCalculator {
      * @param b second double
      * @return true if equal, false otherwise.
      */
-    protected boolean doublesEqual(double a, double b) {
+    public boolean doublesEqual(double a, double b) {
         return roundDouble(a) == roundDouble(b);
     }
 

@@ -53,7 +53,6 @@ public class FlightpathWriter extends CustomFileWriter {
             object.add("angle", new JsonPrimitive(flightMove.getAngle()));
             object.add("toLongitude", new JsonPrimitive(toLongitude));
             object.add("toLatitude", new JsonPrimitive(toLatitude));
-            object.add("ticksSinceStartOfCalculation", new JsonPrimitive(flightMove.getElapsedTicks()));
             return object;
         }
     }
