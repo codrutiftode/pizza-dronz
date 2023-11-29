@@ -13,7 +13,15 @@ public class CustomConstants {
     public static final String DELIVERIES_FILE_PATH_FORMAT = "resultfiles/deliveries-%s.json";
     public static final int DIRECTIONS_CIRCLE_DIVISIONS = 16;
 
-    /* API Endpoints */
+    /**
+     * The maximum number of nodes that can be expanded from the frontier
+     * before A* gives up.
+     */
+    public static final int DEFAULT_FRONTIER_EXPANSION_LIMIT = 40000;
+
+    /**
+     * API Endpoints
+     */
     public final static String ALIVE_ENDPOINT = "isAlive";
     public final static String RESTAURANTS_ENDPOINT = "restaurants";
     public final static String ORDERS_ENDPOINT = "orders";

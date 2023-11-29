@@ -113,7 +113,7 @@ public class PathFinder {
         aStar.setHeuristic(h);
         aStar.setFilter(f);
         aStar.setNavigator(navigator);
-        aStar.setFrontierExpansionLimit(40000); // TODO: think about this
+        aStar.setFrontierExpansionLimit(CustomConstants.DEFAULT_FRONTIER_EXPANSION_LIMIT);
         return aStar.run(startPoint, endPoint, stayInCentral);
     }
 }
