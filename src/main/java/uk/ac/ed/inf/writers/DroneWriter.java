@@ -4,11 +4,11 @@ import com.google.gson.*;
 import uk.ac.ed.inf.CustomLogger;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.pathFinder.FlightMove;
-import uk.ac.ed.inf.writers.CustomFileWriter;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Writes the GeoJSON file containing the drone path
@@ -62,8 +62,9 @@ public class DroneWriter extends CustomFileWriter {
      * @return the list of positions the flightpath will go through
      */
     private List<LngLat> compileDronePath(List<List<FlightMove<LngLat>>> paths) {
+        List<List<FlightMove<LngLat>>> notNullPaths = paths.stream().filter(Objects::nonNull).toList();
         List<LngLat> dronePath = new ArrayList<>();
-        for (List<FlightMove<LngLat>> path : paths) {
+        for (List<FlightMove<LngLat>> path : notNullPaths) {
             dronePath.addAll(path.stream().map(FlightMove::getFrom).toList());
             FlightMove<LngLat> lastMove = path.get(path.size() - 1);
             dronePath.add(lastMove.getTo());

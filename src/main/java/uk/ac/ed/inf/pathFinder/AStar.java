@@ -60,7 +60,6 @@ public class AStar<PositionT> {
 
         while (!navigator.isCloseTo(currentNode.getCurrentPosition(), endPoint)) {
             List<RouteNode<PositionT>> nextMoves = filter.filterNodes(currentNode.getNextMoves(), stayInCentral);
-            currentNode.stampTime();
             frontier.addAll(nextMoves);
 
             currentNode = frontier.poll();
@@ -70,7 +69,9 @@ public class AStar<PositionT> {
 
             // Break if too many nodes have been expanded
             noExpandedNodes += 1;
-            if (frontierExpansionLimit != -1 && noExpandedNodes >= frontierExpansionLimit) break;
+            if (frontierExpansionLimit != -1 && noExpandedNodes >= frontierExpansionLimit) {
+                return null; // Expansion limit reached, give up
+            }
         }
         return currentNode;
     }
@@ -102,8 +103,7 @@ public class AStar<PositionT> {
             RouteNode<PositionT> nextNode = nodesList.get(i + 1);
             FlightMove<PositionT> move = new FlightMove<>(node.getCurrentPosition(),
                     nextNode.getCurrentPosition(),
-                    node.getPreviousMove() * 22.5,
-                    node.getTimestamp()
+                    node.getPreviousMove() * 22.5
             );
             moveList.add(move);
         }

@@ -4,6 +4,7 @@ import uk.ac.ed.inf.api.APIResult;
 import uk.ac.ed.inf.api.OrderValidator;
 import uk.ac.ed.inf.api.OrdersAPIClient;
 import uk.ac.ed.inf.api.RestaurantFinder;
+import uk.ac.ed.inf.ilp.constant.OrderStatus;
 import uk.ac.ed.inf.ilp.constant.OrderValidationCode;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
@@ -48,6 +49,9 @@ public class App
 
         // Find paths
         List<List<FlightMove<LngLat>>> paths = computePaths(validOrders, restaurants, noFlyZones, centralArea);
+
+        // Updates the order status based on whether a path was computed or not
+        updateOrdersStatus(ordersWithValidation, validOrders, paths);
 
         // Output to files
         writeToFiles(ordersWithValidation, paths);
@@ -114,6 +118,29 @@ public class App
     }
 
     /**
+     * Updates the order status to all valid but not delivered orders,
+     * based on whether a path was found for them or not
+     * @param allOrders All orders
+     * @param validOrders Only the valid orders
+     * @param paths The computed paths
+     */
+    private static void updateOrdersStatus(List<Order> allOrders, List<Order> validOrders, List<List<FlightMove<LngLat>>> paths) {
+        int i = 0;
+        int j = 0;
+        while (i < allOrders.size() && j < validOrders.size()) {
+            Order toValidate = allOrders.get(i);
+            Order validOrder = validOrders.get(j);
+            if (toValidate.getOrderNo().equals(validOrder.getOrderNo())) {
+                if (paths.get(j) != null) {
+                    toValidate.setOrderStatus(OrderStatus.DELIVERED);
+                }
+                j++;
+            }
+            i++;
+        }
+    }
+
+    /**
      * Tries to compute a path for every valid order
      * @param validOrders a list of valid orders
      * @param restaurants a list of restaurants
@@ -134,8 +161,8 @@ public class App
             List<FlightMove<LngLat>> path = pathFinder.computePath(targetLocation);
             if (path != null) {
                 path.forEach(move -> move.assignToOrder(order.getOrderNo()));
-                paths.add(path);
             }
+            paths.add(path);
         }
         return paths;
     }
@@ -150,7 +177,7 @@ public class App
         String flightpathFile = String.format(CustomConstants.FLIGHTPATH_FILE_PATH_FORMAT, targetDate);
         String droneFile = String.format(CustomConstants.DRONE_FILE_PATH_FORMAT, targetDate);
 
-        new DeliveriesWriter(deliveriesFile).writeDeliveries(ordersWithValidation); // TODO: check what needs to be written here
+        new DeliveriesWriter(deliveriesFile).writeDeliveries(ordersWithValidation);
         new FlightpathWriter(flightpathFile).writeFlightpath(paths);
         new DroneWriter(droneFile).writePaths(paths);
     }

@@ -2,7 +2,6 @@ package uk.ac.ed.inf.pathFinder;
 
 import uk.ac.ed.inf.CustomConstants;
 import uk.ac.ed.inf.coordinates.LngLatHandler;
-import uk.ac.ed.inf.TimeKeeper;
 import uk.ac.ed.inf.ilp.data.LngLat;
 import uk.ac.ed.inf.ilp.data.NamedRegion;
 import java.util.*;
@@ -23,40 +22,38 @@ public class PathFinder {
         this.pathCache = new PathCache<>();
     }
     public List<FlightMove<LngLat>> computePath(LngLat targetLocation) {
-        if (pathCache.has(targetLocation)) {
-            return pathCache.get(targetLocation);
-        }
+        try {
+            if (pathCache.has(targetLocation)) {
+                return pathCache.get(targetLocation);
+            }
+            List<FlightMove<LngLat>> fullPath;
+            List<FlightMove<LngLat>> pathToRestaurant = findPathBetween(this.dropOffPoint, targetLocation, false);
+            FlightMove<LngLat> targetHoverMove = getHoverMove(getLastPosition(pathToRestaurant));
+            fullPath = new ArrayList<>(pathToRestaurant);
+            fullPath.add(targetHoverMove);
 
-        // Start timer if not started
-        if (!TimeKeeper.getTimeKeeper().isStarted()) {
-            TimeKeeper.getTimeKeeper().startKeepingTime();
-        }
+            LngLat droneAtTarget = targetHoverMove.getTo();
+            if (!navigator.isInCentralArea(droneAtTarget, centralArea)) {
+                List<FlightMove<LngLat>> pathToCentralArea = findPathToCentralArea(droneAtTarget);
+                List<FlightMove<LngLat>> pathToDropOff = findPathBetween(getLastPosition(pathToCentralArea), dropOffPoint, true);
+                FlightMove<LngLat> dropOffHoverMove = getHoverMove(getLastPosition(pathToDropOff));
+                fullPath.addAll(pathToCentralArea);
+                fullPath.addAll(pathToDropOff);
+                fullPath.add(dropOffHoverMove);
+            } else {
+                List<FlightMove<LngLat>> pathFromRestaurant = findPathBetween(droneAtTarget, dropOffPoint, false);
+                FlightMove<LngLat> dropOffHoverMove = getHoverMove(getLastPosition(pathFromRestaurant));
+                fullPath.addAll(pathFromRestaurant);
+                fullPath.add(dropOffHoverMove);
+            }
 
-        List<FlightMove<LngLat>> fullPath;
-        List<FlightMove<LngLat>> pathToRestaurant = findPathBetween(this.dropOffPoint, targetLocation, false);
-        FlightMove<LngLat> targetHoverMove = getHoverMove(getLastPosition(pathToRestaurant));
-        fullPath = new ArrayList<>(pathToRestaurant);
-        fullPath.add(targetHoverMove);
-
-        LngLat droneAtTarget = targetHoverMove.getTo();
-        if (!navigator.isInCentralArea(droneAtTarget, centralArea)) {
-            List<FlightMove<LngLat>> pathToCentralArea = findPathToCentralArea(droneAtTarget);
-            List<FlightMove<LngLat>> pathToDropOff = findPathBetween(getLastPosition(pathToCentralArea), dropOffPoint, true);
-            FlightMove<LngLat> dropOffHoverMove = getHoverMove(getLastPosition(pathToDropOff));
-            fullPath.addAll(pathToCentralArea);
-            fullPath.addAll(pathToDropOff);
-            fullPath.add(dropOffHoverMove);
+            // Save to cache
+            pathCache.cache(targetLocation, fullPath);
+            return fullPath;
         }
-        else {
-            List<FlightMove<LngLat>> pathFromRestaurant = findPathBetween(droneAtTarget, dropOffPoint, false);
-            FlightMove<LngLat> dropOffHoverMove = getHoverMove(getLastPosition(pathFromRestaurant));
-            fullPath.addAll(pathFromRestaurant);
-            fullPath.add(dropOffHoverMove);
+        catch (Exception e) {
+            return null; // No path could be found
         }
-
-        // Save to cache
-        pathCache.cache(targetLocation, fullPath);
-        return fullPath;
     }
 
     private LngLat getLastPosition(List<FlightMove<LngLat>> moves) {
@@ -66,8 +63,7 @@ public class PathFinder {
     private FlightMove<LngLat> getHoverMove(LngLat location) {
         return new FlightMove<>(location,
                 location,
-                CustomConstants.ANGLE_WHEN_HOVER,
-                TimeKeeper.getTimeKeeper().getTime()
+                CustomConstants.ANGLE_WHEN_HOVER
         );
     }
 
@@ -99,7 +95,7 @@ public class PathFinder {
      * @param startPoint the point to start from
      * @return a list of flight moves that take the drone from startPoint to inside the central area
      */
-    private List<FlightMove<LngLat>> findPathToCentralArea(LngLat startPoint) {
+    private List<FlightMove<LngLat>> findPathToCentralArea(LngLat startPoint) throws Exception {
         LngLat entrance = findCentralAreaEntrance(startPoint);
 
         // Take two moves towards the center of central area to ensure arriving inside the central area
@@ -115,7 +111,7 @@ public class PathFinder {
      * @param stayInCentral whether the drone should stay within the central area
      * @return a list of flight moves that take the drone from start to end
      */
-    private List<FlightMove<LngLat>> findPathBetween(LngLat startPoint, LngLat endPoint, boolean stayInCentral) {
+    private List<FlightMove<LngLat>> findPathBetween(LngLat startPoint, LngLat endPoint, boolean stayInCentral) throws Exception {
         AStar<LngLat> aStar = new AStar<>();
         Heuristic h = new Heuristic(navigator);
         Filter f = new Filter(noFlyZones, centralArea);
@@ -123,6 +119,8 @@ public class PathFinder {
         aStar.setFilter(f);
         aStar.setNavigator(navigator);
         aStar.setFrontierExpansionLimit(CustomConstants.DEFAULT_FRONTIER_EXPANSION_LIMIT);
-        return aStar.run(startPoint, endPoint, stayInCentral);
+        List<FlightMove<LngLat>> result = aStar.run(startPoint, endPoint, stayInCentral);
+        if (result == null) throw new Exception("Path cannot be found.");
+        return result;
     }
 }

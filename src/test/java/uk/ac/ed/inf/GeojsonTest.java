@@ -50,7 +50,7 @@ public class GeojsonTest extends TestCase {
     public void test2() {
         CustomLogger logger = CustomLogger.getLogger();
         String apiUrl = "https://ilp-rest.azurewebsites.net/";
-        String targetDate = "2023-11-21";
+        String targetDate = "2023-11-02";
         OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
         Restaurant[] restaurants = apiClient.getRestaurants();
         Order[] orders = apiClient.getOrders(targetDate);

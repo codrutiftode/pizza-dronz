@@ -1,7 +1,6 @@
 package uk.ac.ed.inf.pathFinder;
 
 import uk.ac.ed.inf.CustomConstants;
-import uk.ac.ed.inf.TimeKeeper;
 import uk.ac.ed.inf.ilp.constant.SystemConstants;
 
 import java.util.ArrayList;
@@ -12,7 +11,6 @@ public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
     protected final PositionT currentPosition;
     protected final RouteNode<PositionT> previousNode;
     protected final int previousMove;
-    private long timestamp = -1;
     protected final PositionT endPoint;
     protected final IHeuristic<PositionT> heuristic;
 
@@ -72,10 +70,6 @@ public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
         return this.previousMove;
     }
 
-    public long getTimestamp() {
-        return this.timestamp;
-    }
-
     public double getCostSoFar() {
         return costSoFar;
     }
@@ -86,13 +80,6 @@ public class RouteNode<PositionT> implements Comparable<RouteNode<PositionT>> {
 
     public RouteNode<PositionT> getPreviousNode() {
         return previousNode;
-    }
-
-    /**
-     * Records current time of executing this method
-     */
-    public void stampTime() {
-        this.timestamp = TimeKeeper.getTimeKeeper().getTime();
     }
 
     /**

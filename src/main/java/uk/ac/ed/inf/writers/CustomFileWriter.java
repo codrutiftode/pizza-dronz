@@ -15,8 +15,10 @@ public abstract class CustomFileWriter {
 
     protected void write(String value) throws IOException {
         if (!this.file.exists()) {
-            if (!this.file.getParentFile().mkdirs()) {
-                throw new IOException("Could not create output file parent directories for: " + this.file.getPath());
+            if (!this.file.getParentFile().exists()) {
+                if (!this.file.getParentFile().mkdirs()) {
+                    throw new IOException("Could not create output file parent directories for: " + this.file.getPath());
+                }
             }
             if (!this.file.createNewFile()) {
                 throw new IOException("Could not create output file: " + this.file.getPath());

@@ -8,6 +8,7 @@ import uk.ac.ed.inf.pathFinder.FlightMove;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 /**
@@ -19,8 +20,9 @@ public class FlightpathWriter extends CustomFileWriter {
     }
 
     public void writeFlightpath(List<List<FlightMove<LngLat>>> paths) {
+        List<List<FlightMove<LngLat>>> notNullPaths = paths.stream().filter(Objects::nonNull).toList();
         Gson gson = new GsonBuilder().registerTypeAdapter(FlightMove.class, new FlightpathSerialiser()).create();
-        String output = gson.toJson(flatten(paths));
+        String output = gson.toJson(flatten(notNullPaths));
         try {
             this.write(output);
         }
