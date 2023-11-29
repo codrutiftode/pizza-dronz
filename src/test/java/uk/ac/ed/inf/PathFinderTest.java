@@ -36,7 +36,7 @@ public class PathFinderTest extends TestCase {
                 });
         LngLat targetLocation = new LngLat(7, 7);
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea,dropOff);
-        List<FlightMove<LngLat>> path = pathFinder.computePath(dropOff, targetLocation);
+        List<FlightMove<LngLat>> path = pathFinder.computePath(targetLocation);
         System.out.println(Arrays.toString(path.toArray()));
     }
 
@@ -81,11 +81,10 @@ public class PathFinderTest extends TestCase {
 
         DroneWriter fileWriter = new DroneWriter("results_test/drone.geojson");
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
-        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
         logger.log("Computing path...");
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         Order order = validOrders.get(0);
-        List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+        List<FlightMove<LngLat>> path = pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location());
         logger.log("Path computed.");
 
         List<List<FlightMove<LngLat>>> list = new ArrayList<>();

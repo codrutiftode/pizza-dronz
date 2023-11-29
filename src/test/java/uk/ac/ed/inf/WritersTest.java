@@ -59,13 +59,11 @@ public class WritersTest extends TestCase {
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         List<List<FlightMove<LngLat>>> paths = new ArrayList<>();
-        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
         for (Order order : validOrders) {
-            List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+            List<FlightMove<LngLat>> path = pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location());
             if (path != null) {
                 path.forEach(move -> move.assignToOrder(order.getOrderNo()));
                 paths.add(path);
-                lastDropOff = path.get(path.size() - 1).getTo();
             }
         }
 
@@ -91,9 +89,8 @@ public class WritersTest extends TestCase {
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         List<List<FlightMove<LngLat>>> paths = new ArrayList<>();
-        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
         Order order = validOrders.get(0);
-        List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, restaurantFinder.getRestaurantForOrder(order).location());
+        List<FlightMove<LngLat>> path = pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location());
         if (path != null) {
             path.forEach(move -> move.assignToOrder(order.getOrderNo()));
             paths.add(path);

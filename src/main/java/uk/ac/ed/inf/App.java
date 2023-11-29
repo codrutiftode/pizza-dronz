@@ -128,15 +128,13 @@ public class App
         PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
         List<List<FlightMove<LngLat>>> paths = new ArrayList<>();
-        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
 
         for (Order order : validOrders) {
             LngLat targetLocation = restaurantFinder.getRestaurantForOrder(order).location();
-            List<FlightMove<LngLat>> path = pathFinder.computePath(lastDropOff, targetLocation);
+            List<FlightMove<LngLat>> path = pathFinder.computePath(targetLocation);
             if (path != null) {
                 path.forEach(move -> move.assignToOrder(order.getOrderNo()));
                 paths.add(path);
-                lastDropOff = path.get(path.size() - 1).getTo();
             }
         }
         return paths;
