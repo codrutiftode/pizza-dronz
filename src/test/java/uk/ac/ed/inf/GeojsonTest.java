@@ -50,7 +50,7 @@ public class GeojsonTest extends TestCase {
     public void test2() {
         CustomLogger logger = CustomLogger.getLogger();
         String apiUrl = "https://ilp-rest.azurewebsites.net/";
-        String targetDate = "2023-11-20";
+        String targetDate = "2023-11-21";
         OrdersAPIClient apiClient = new OrdersAPIClient(apiUrl);
         Restaurant[] restaurants = apiClient.getRestaurants();
         Order[] orders = apiClient.getOrders(targetDate);
@@ -67,11 +67,10 @@ public class GeojsonTest extends TestCase {
         DroneWriter fileWriter = new DroneWriter("results_test/drone.geojson");
         List<List<FlightMove<LngLat>>> dronePaths = new ArrayList<>();
         RestaurantFinder restaurantFinder = new RestaurantFinder(restaurants);
-        LngLat lastDropOff = CustomConstants.DROP_OFF_POINT;
+        PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
 
         for (int i = 0; i < validOrders.size(); i++) {
             Order order = validOrders.get(i);
-            PathFinder pathFinder = new PathFinder(noFlyZones, centralArea, CustomConstants.DROP_OFF_POINT);
             logger.log("Computing path " + i + "...");
             List<FlightMove<LngLat>> path = pathFinder.computePath(restaurantFinder.getRestaurantForOrder(order).location());
             logger.log("Path " + i + " computed!");

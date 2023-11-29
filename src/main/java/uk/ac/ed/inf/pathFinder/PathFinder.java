@@ -13,14 +13,20 @@ public class PathFinder {
     private final NamedRegion centralArea;
 
     private final LngLatHandler navigator;
+    private final PathCache<FlightMove<LngLat>> pathCache;
 
     public PathFinder(NamedRegion[] noFlyZones, NamedRegion centralArea, LngLat dropOffPoint) {
         this.noFlyZones = noFlyZones;
         this.centralArea = centralArea;
         this.dropOffPoint = dropOffPoint;
         this.navigator = new LngLatHandler();
+        this.pathCache = new PathCache<>();
     }
     public List<FlightMove<LngLat>> computePath(LngLat targetLocation) {
+        if (pathCache.has(targetLocation)) {
+            return pathCache.get(targetLocation);
+        }
+
         // Start timer if not started
         if (!TimeKeeper.getTimeKeeper().isStarted()) {
             TimeKeeper.getTimeKeeper().startKeepingTime();
@@ -47,6 +53,9 @@ public class PathFinder {
             fullPath.addAll(pathFromRestaurant);
             fullPath.add(dropOffHoverMove);
         }
+
+        // Save to cache
+        pathCache.cache(targetLocation, fullPath);
         return fullPath;
     }
 
